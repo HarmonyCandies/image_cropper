@@ -1,0 +1,17 @@
+{
+  "license": "Apache-2.0",
+  "devDependencies": {},
+  "keywords": [
+    "crop",
+    "cropimage",
+    "imagecropper"
+  ],
+  "author": "zmtzawqlp",
+  "name": "@candies/image_cropper",
+  "description": "Harmony plugin to supports cropping images.",
+  "main": "Index.ets",
+  "repository": "https://github.com/HarmonyCandies/image_cropper",
+  "version": "1.0.0",
+  "homepage": "https://github.com/HarmonyCandies/image_cropper",
+  "dependencies": {}
+}

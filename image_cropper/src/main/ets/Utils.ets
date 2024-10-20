@@ -1,0 +1,1 @@
+const precisionErrorTolerance: number = 1e-10;
