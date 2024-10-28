@@ -310,6 +310,10 @@ export namespace geometry {
       );
     }
 
+    static fromOffsetSize(offse: Offset, size: Size): Rect {
+      return Rect.fromLTRB(offse.dx, offse.dy, offse.dx + size.width, offse.dy + size.height);
+    }
+
     left: number;
     top: number;
     right: number;
@@ -544,8 +548,8 @@ export namespace geometry {
     }
 
     // 计算减少边距后的矩形
-    public deflateRect(rect: Rect): EdgeInsets {
-      return new EdgeInsets(
+    public deflateRect(rect: Rect): Rect {
+      return new Rect(
         rect.left + this.left,
         rect.top + this.top,
         rect.right - this.right,

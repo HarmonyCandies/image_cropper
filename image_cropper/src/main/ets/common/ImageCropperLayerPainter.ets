@@ -17,9 +17,9 @@ export class ImageCropperLayerPainter {
   /// Adjust the rect to ensure the mask covers the whole area after rotation
   paint(
     canvas: drawing.Canvas,
-    size: Size,
-    painter: ExtendedImageCropLayerPainter,
-    rect: Rect,
+    size: geometry.Size,
+    painter: ImageCropperPainter,
+    rect: geometry.Rect,
   ): void {
     // Draw the mask layer
     this.paintMask(canvas, rect, painter);
@@ -32,133 +32,166 @@ export class ImageCropperLayerPainter {
   }
 
   /// Draw corners of the crop area
-  private paintCorners(canvas: drawing.Canvas, size: Size, painter: ExtendedImageCropLayerPainter): void {
+  private paintCorners(canvas: drawing.Canvas, size: Size, painter: ImageCropperPainter): void {
     const cropRect = painter.cropRect;
     const cornerSize = painter.cornerSize;
     const cornerWidth = cornerSize.width;
     const cornerHeight = cornerSize.height;
-    const paint = new drawing.Pen();
-    paint.color = painter.cornerColor;
-    paint.style = PaintingStyle.fill;
+
+    let brush = new drawing.Brush();
+    brush.setColor(painter.cornerColor);
+    canvas.attachBrush(brush);
+
 
     // Draw top-left corner
+    let path = new drawing.Path();
+    path.moveTo(cropRect.left, cropRect.top);
+    path.lineTo(cropRect.left + cornerWidth, cropRect.top);
+    path.lineTo(cropRect.left + cornerWidth, cropRect.top + cornerHeight);
+    path.lineTo(cropRect.left + cornerHeight, cropRect.top + cornerHeight);
+    path.lineTo(cropRect.left + cornerHeight, cropRect.top + cornerWidth);
+    path.lineTo(cropRect.left, cropRect.top + cornerWidth);
     canvas.drawPath(
-      new drawing.Path()
-        .moveTo(cropRect.left, cropRect.top)
-        .lineTo(cropRect.left + cornerWidth, cropRect.top)
-        .lineTo(cropRect.left + cornerWidth, cropRect.top + cornerHeight)
-        .lineTo(cropRect.left + cornerHeight, cropRect.top + cornerHeight)
-        .lineTo(cropRect.left + cornerHeight, cropRect.top + cornerWidth)
-        .lineTo(cropRect.left, cropRect.top + cornerWidth),
-      paint
+      path
     );
+
 
     // Draw bottom-left corner
+    path = new drawing.Path();
+    path.moveTo(cropRect.left, cropRect.bottom)
+    path.lineTo(cropRect.left + cornerWidth, cropRect.bottom)
+    path.lineTo(cropRect.left + cornerWidth, cropRect.bottom - cornerHeight)
+    path.lineTo(cropRect.left + cornerHeight, cropRect.bottom - cornerHeight)
+    path.lineTo(cropRect.left + cornerHeight, cropRect.bottom - cornerWidth)
+    path.lineTo(cropRect.left, cropRect.bottom - cornerWidth);
     canvas.drawPath(
-      new drawing.Path()
-        .moveTo(cropRect.left, cropRect.bottom)
-        .lineTo(cropRect.left + cornerWidth, cropRect.bottom)
-        .lineTo(cropRect.left + cornerWidth, cropRect.bottom - cornerHeight)
-        .lineTo(cropRect.left + cornerHeight, cropRect.bottom - cornerHeight)
-        .lineTo(cropRect.left + cornerHeight, cropRect.bottom - cornerWidth)
-        .lineTo(cropRect.left, cropRect.bottom - cornerWidth),
-      paint
+      path
     );
 
+    path = new drawing.Path();
+    path.moveTo(cropRect.right, cropRect.top)
+    path.lineTo(cropRect.right - cornerWidth, cropRect.top)
+    path.lineTo(cropRect.right - cornerWidth, cropRect.top + cornerHeight)
+    path.lineTo(cropRect.right - cornerHeight, cropRect.top + cornerHeight)
+    path.lineTo(cropRect.right - cornerHeight, cropRect.top + cornerWidth)
+    path.lineTo(cropRect.right, cropRect.top + cornerWidth)
     // Draw top-right corner
     canvas.drawPath(
-      new drawing.Path()
-        .moveTo(cropRect.right, cropRect.top)
-        .lineTo(cropRect.right - cornerWidth, cropRect.top)
-        .lineTo(cropRect.right - cornerWidth, cropRect.top + cornerHeight)
-        .lineTo(cropRect.right - cornerHeight, cropRect.top + cornerHeight)
-        .lineTo(cropRect.right - cornerHeight, cropRect.top + cornerWidth)
-        .lineTo(cropRect.right, cropRect.top + cornerWidth),
-      paint
+      path
     );
 
+
     // Draw bottom-right corner
+    path = new drawing.Path();
+    path.moveTo(cropRect.right, cropRect.bottom)
+    path.lineTo(cropRect.right - cornerWidth, cropRect.bottom)
+    path.lineTo(cropRect.right - cornerWidth, cropRect.bottom - cornerHeight)
+    path.lineTo(cropRect.right - cornerHeight, cropRect.bottom - cornerHeight)
+    path.lineTo(cropRect.right - cornerHeight, cropRect.bottom - cornerWidth)
+    path.lineTo(cropRect.right, cropRect.bottom - cornerWidth)
     canvas.drawPath(
-      new drawing.Path()
-        .moveTo(cropRect.right, cropRect.bottom)
-        .lineTo(cropRect.right - cornerWidth, cropRect.bottom)
-        .lineTo(cropRect.right - cornerWidth, cropRect.bottom - cornerHeight)
-        .lineTo(cropRect.right - cornerHeight, cropRect.bottom - cornerHeight)
-        .lineTo(cropRect.right - cornerHeight, cropRect.bottom - cornerWidth)
-        .lineTo(cropRect.right, cropRect.bottom - cornerWidth),
-      paint
+      path
     );
+
+    canvas.detachBrush();
   }
 
   /// Draw the mask over the crop area
-  private paintMask(canvas: drawing.Canvas, rect: Rect, painter: ExtendedImageCropLayerPainter): void {
+  private paintMask(canvas: drawing.Canvas, rect: geometry.Rect, painter: ImageCropperPainter): void {
     const cropRect = painter.cropRect;
     const maskColor = painter.maskColor;
 
     // Save the current layer for later restoration
-    canvas.saveLayer(rect, new Paint());
+    canvas.saveLayer({
+      top: rect.top,
+      left: rect.left,
+      right: rect.right,
+      bottom: rect.bottom,
+    },);
+
 
     // Clip the crop area and draw the mask outside the crop area
-    canvas.clipRect(cropRect, ClipOp.difference);
-    canvas.drawRect(rect, new Paint().setStyle(PaintingStyle.fill).setColor(maskColor));
+    canvas.clipRect({
+      top: cropRect.top,
+      left: cropRect.left,
+      right: cropRect.right,
+      bottom: cropRect.bottom,
+    }, drawing.ClipOp.DIFFERENCE);
+
+    let brush = new drawing.Brush();
+    brush.setColor(painter.maskColor);
+    canvas.attachBrush(brush);
+    canvas.drawRect(rect);
+    canvas.detachBrush();
 
     // Restore the canvas layer
     canvas.restore();
   }
 
   /// Draw grid lines inside the crop area
-  private paintLines(canvas: drawing.Canvas, size: Size, painter: ExtendedImageCropLayerPainter): void {
+  private paintLines(canvas: drawing.Canvas, size: Size, painter: ImageCropperPainter): void {
     const lineColor = painter.lineColor;
     const lineHeight = painter.lineHeight;
     const cropRect = painter.cropRect;
     const pointerDown = painter.pointerDown;
-    const linePainter = new Paint()
-      .setColor(lineColor)
-      .setStrokeWidth(lineHeight)
-      .setStyle(PaintingStyle.stroke);
+    const pen = new drawing.Pen();
+    pen.setColor(lineColor);
+    pen.setStrokeWidth(lineHeight)
+    canvas.attachPen(pen);
 
     // Draw the crop rectangle's border
-    canvas.drawRect(cropRect, linePainter);
+    canvas.drawRect({
+      top: cropRect.top,
+      left: cropRect.left,
+      right: cropRect.right,
+      bottom: cropRect.bottom,
+    },);
 
     // If pointer is down, draw additional grid lines inside the crop area
     if (pointerDown) {
       // Vertical lines
       canvas.drawLine(
-        new Offset((cropRect.right - cropRect.left) / 3.0 + cropRect.left, cropRect.top),
-        new Offset((cropRect.right - cropRect.left) / 3.0 + cropRect.left, cropRect.bottom),
-        linePainter
+        (cropRect.right - cropRect.left) / 3.0 + cropRect.left,
+        cropRect.top,
+        (cropRect.right - cropRect.left) / 3.0 + cropRect.left,
+        cropRect.bottom,
       );
 
       canvas.drawLine(
-        new Offset((cropRect.right - cropRect.left) / 3.0 * 2.0 + cropRect.left, cropRect.top),
-        new Offset((cropRect.right - cropRect.left) / 3.0 * 2.0 + cropRect.left, cropRect.bottom),
-        linePainter
+        (cropRect.right - cropRect.left) / 3.0 * 2.0 + cropRect.left,
+        cropRect.top,
+        (cropRect.right - cropRect.left) / 3.0 * 2.0 + cropRect.left,
+        cropRect.bottom,
       );
 
       // Horizontal lines
       canvas.drawLine(
-        new Offset(cropRect.left, (cropRect.bottom - cropRect.top) / 3.0 + cropRect.top),
-        new Offset(cropRect.right, (cropRect.bottom - cropRect.top) / 3.0 + cropRect.top),
-        linePainter
+        cropRect.left,
+        (cropRect.bottom - cropRect.top) / 3.0 + cropRect.top,
+        cropRect.right,
+        (cropRect.bottom - cropRect.top) / 3.0 + cropRect.top,
       );
 
       canvas.drawLine(
-        new Offset(cropRect.left, (cropRect.bottom - cropRect.top) / 3.0 * 2.0 + cropRect.top),
-        new Offset(cropRect.right, (cropRect.bottom - cropRect.top) / 3.0 * 2.0 + cropRect.top),
-        linePainter
+        cropRect.left,
+        (cropRect.bottom - cropRect.top) / 3.0 * 2.0 + cropRect.top,
+        cropRect.right,
+        (cropRect.bottom - cropRect.top) / 3.0 * 2.0 + cropRect.top,
       );
     }
+
+    canvas.detachPen();
   }
 }
 
 
-class ExtendedImageCropLayerPainter {
+class ImageCropperPainter {
   cropRect: geometry.Rect;
   cornerSize: geometry.Size;
-  cornerColor: Color;
-  lineColor: Color;
+  cornerColor: common2D.Color;
+  lineColor: common2D.Color;
   lineHeight: number;
-  maskColor: Color;
+  maskColor: common2D.Color;
   pointerDown: boolean;
   cropLayerPainter: ImageCropperLayerPainter;
   rotateRadians: number;
@@ -166,11 +199,11 @@ class ExtendedImageCropLayerPainter {
   constructor(
     cropRect: geometry.Rect,
     cropLayerPainter: ImageCropperLayerPainter,
-    lineColor: Color,
-    cornerColor: Color,
+    lineColor: common2D.Color,
+    cornerColor: common2D.Color,
     cornerSize: geometry.Size,
     lineHeight: number,
-    maskColor: Color,
+    maskColor: common2D.Color,
     pointerDown: boolean,
     rotateRadians: number,
   ) {
@@ -186,7 +219,7 @@ class ExtendedImageCropLayerPainter {
   }
 
   paint(canvas: drawing.Canvas, size: geometry.Size): void {
-    let rect: geometry.Rect = new geometry.Rect(new geometry.Offset(0, 0), size);
+    let rect: geometry.Rect = geometry.Rect.fromOffsetSize(new geometry.Offset(0, 0), size);
 
     // Apply rotation if necessary
     if (this.rotateRadians !== 0) {
@@ -204,6 +237,7 @@ class ExtendedImageCropLayerPainter {
       // Apply the transformation matrix
       let xxx: drawing.Matrix = new drawing.Matrix();
 
+      // TODO
       canvas.setMatrix(xxx);
 
       // Adjust rect size to ensure the mask covers the whole area after rotation
@@ -220,22 +254,17 @@ class ExtendedImageCropLayerPainter {
     }
   }
 
-  shouldRepaint(oldDelegate: CustomPainter): boolean {
-    if (oldDelegate.constructor !== this.constructor) {
-      return true;
-    }
-
-    const delegate = oldDelegate as ExtendedImageCropLayerPainter;
+  shouldRepaint(oldDelegate: ImageCropperPainter): boolean {
 
     // Repaint if any properties have changed
-    return this.cropRect !== delegate.cropRect ||
-      this.cornerSize !== delegate.cornerSize ||
-      this.lineColor !== delegate.lineColor ||
-      this.lineHeight !== delegate.lineHeight ||
-      this.maskColor !== delegate.maskColor ||
-      this.cropLayerPainter !== delegate.cropLayerPainter ||
-      this.cornerColor !== delegate.cornerColor ||
-      this.pointerDown !== delegate.pointerDown ||
-      this.rotateRadians !== delegate.rotateRadians;
+    return this.cropRect !== oldDelegate.cropRect ||
+      this.cornerSize !== oldDelegate.cornerSize ||
+      this.lineColor !== oldDelegate.lineColor ||
+      this.lineHeight !== oldDelegate.lineHeight ||
+      this.maskColor !== oldDelegate.maskColor ||
+      this.cropLayerPainter !== oldDelegate.cropLayerPainter ||
+      this.cornerColor !== oldDelegate.cornerColor ||
+      this.pointerDown !== oldDelegate.pointerDown ||
+      this.rotateRadians !== oldDelegate.rotateRadians;
   }
 }

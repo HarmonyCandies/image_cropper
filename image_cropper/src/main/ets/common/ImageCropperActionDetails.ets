@@ -15,22 +15,22 @@ export class ImageCropperActionDetails {
   cropRect?: geometry.Rect;
   perspectivePoints: geometry.Offset[] = [];
   // Image aspect ratio
-  originalAspectRatio?: number;
+  originalAspectRatio: number | null = null;
   // Crop aspect ratio
-  private _cropAspectRatio?: number;
+  private _cropAspectRatio: number | null = null;
 
-  get originalCropAspectRatio(): number | undefined {
+  get originalCropAspectRatio(): number | null {
     return this._cropAspectRatio;
   }
 
-  get cropAspectRatio(): number | undefined {
-    if (this._cropAspectRatio !== undefined && this._cropAspectRatio <= 0) {
+  get cropAspectRatio(): number | null {
+    if (this._cropAspectRatio != undefined && this._cropAspectRatio <= 0) {
       return this.originalAspectRatio;
     }
     return this._cropAspectRatio;
   }
 
-  set cropAspectRatio(value: number | undefined) {
+  set cropAspectRatio(value: number | null) {
     if (this._cropAspectRatio !== value) {
       this._cropAspectRatio = value;
     }

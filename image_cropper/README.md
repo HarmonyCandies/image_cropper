@@ -20,9 +20,10 @@
 | --- | --- |
 
 
+ 
 ## 安装
 
-`ohpm install @candies/pull_to_refresh`
+`ohpm install @candies/image_cropper`
 
 
 ## 参数
