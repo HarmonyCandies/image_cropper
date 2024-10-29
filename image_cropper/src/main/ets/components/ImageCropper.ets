@@ -12,19 +12,19 @@ export struct ImageCropper {
   @Link image: PixelMap;
   initCropperConfigHandler?: InitCropperConfigHandler;
   private _config: ImageCropperConfig | null = null;
-  imageInfo: image.ImageInfo | null = null;
-  @State _actionDetails: ImageCropperActionDetails | null = null;
-  @State _area: Area | null = null;
-  _startingOffset: geometry.Offset = geometry.Offset.zero;
-  _detailsScale: number = 1;
-  _startingScale: number = 1;
-  @State _count: number = 1;
+  private imageInfo: image.ImageInfo | null = null;
+  @State private _actionDetails: ImageCropperActionDetails | null = null;
+  @State private _area: Area | null = null;
+  private _startingOffset: geometry.Offset = geometry.Offset.zero;
+  private _detailsScale: number = 1;
+  private _startingScale: number = 1;
+  @State private _count: number = 1;
   private settings: RenderingContextSettings = new RenderingContextSettings(true)
   private imageContext: CanvasRenderingContext2D = new CanvasRenderingContext2D(this.settings)
   private cropLayerContext: CanvasRenderingContext2D = new CanvasRenderingContext2D(this.settings)
-  private onReady: boolean = false;
-  @State _rotateRadians: number = 0;
-  @State _rotationYRadians: number = 0;
+  private _imageContextReady: boolean = false;
+  private _cropLayerContextReady: boolean = false;
+  @State private _rotationYRadians: number = 0;
 
   aboutToAppear() {
     this.initImageInfo().then(() => {
@@ -37,13 +37,11 @@ export struct ImageCropper {
   }
 
   init(): void {
-
     if (this.initCropperConfigHandler != undefined) {
       this._config = this.initCropperConfigHandler(this.imageInfo!);
     } else {
       this._config = new ImageCropperConfig();
     }
-
 
     if (this._actionDetails == null) {
       this._actionDetails = new ImageCropperActionDetails();
@@ -76,41 +74,33 @@ export struct ImageCropper {
 
   build() {
     Stack() {
-      if (this._actionDetails != null && this._count > 0) {
+      if (this._actionDetails != null && this._area != null && this._count > 0) {
         Canvas(this.imageContext).onReady(() => {
-          this.onReady = true;
+          this._imageContextReady = true;
           let outputSize: geometry.Size = new geometry.Size(this.imageContext.width, this.imageContext.height);
           if (this.imageInfo != null) {
             this.initImageRect(outputSize, new geometry.Size(this.imageInfo!.size.width, this.imageInfo!.size.height));
           }
-          // this._size = outputSize;
         })
-          .transform(matrix4.identity().rotate({
-            y: 0,
-            x: 0,
-            z: this._rotateRadians != 0 ? 1 : 0,
-            angle: NumberUtils.degrees(this._rotateRadians),
-          }).rotate({
-            y: this._rotationYRadians != 0 ? 1 : 0,
-            x: 0,
-            z: 0,
-            angle: NumberUtils.degrees(this._rotationYRadians),
-          }))
+          .transform(matrix4.identity()//   .rotate({
+            //   y: 0,
+            //   x: 0,
+            //   z: this._rotateRadians != 0 ? 1 : 0,
+            //   angle: NumberUtils.degrees(this._rotateRadians),
+            // })
+            .rotate({
+              y: this._rotationYRadians != 0 ? 1 : 0,
+              x: 0,
+              z: 0,
+              angle: NumberUtils.degrees(this._rotationYRadians),
+            }))
         Canvas(this.cropLayerContext).onReady(() => {
-
+          this._cropLayerContextReady = true;
+          let outputSize: geometry.Size = new geometry.Size(this.imageContext.width, this.imageContext.height);
+          if (this.imageInfo != null) {
+            this.initImageRect(outputSize, new geometry.Size(this.imageInfo.size.width, this.imageInfo.size.height));
+          }
         })
-        // Image(this.image).objectFit(ImageFit.Contain)
-        //   .transform(this._actionDetails.getTransform())
-        //   .translate({
-        //     x:  this._actionDetails.screenDestinationRect!.center.dx- this._actionDetails.rawDestinationRect!.center.dx,
-        //     y: this._actionDetails.screenDestinationRect!.center.dy- this._actionDetails.rawDestinationRect!.center.dy,
-        //   })
-        //   .scale({
-        //     x: this._actionDetails.totalScale,
-        //     y: this._actionDetails.totalScale,
-        //     // centerX: this._actionDetails.screenDestinationRect?.center.dx,
-        //     // centerY: this._actionDetails.screenDestinationRect?.center.dy,
-        //   })
       } else {
         Image(this.image).objectFit(ImageFit.Contain)
       }
@@ -207,12 +197,14 @@ export struct ImageCropper {
     this.getNewCropRect(layoutRect);
     this._actionDetails?.initRect(layoutRect, destinationRect);
     let screenDestinationRect = this._actionDetails?.getFinalDestinationRect();
-    if (this.onReady && screenDestinationRect != undefined) {
+    if (this._imageContextReady && screenDestinationRect != undefined) {
       this.imageContext.reset();
-      this.imageContext.save();
       this.imageContext.drawImage(this.image, screenDestinationRect!.left, screenDestinationRect!.top,
         screenDestinationRect!.width, screenDestinationRect!.height,);
-      this.imageContext.restore();
+    }
+
+    if (this._cropLayerContextReady) {
+
     }
   }
 
@@ -286,14 +278,17 @@ export struct ImageCropper {
 
   _updateRotate(rotationYRadians: number, rotateRadians: number): void {
     // this.setState(() => {
+    let oldRotateRadians = this._actionDetails!.rotateRadians;
     this._actionDetails!.rotationYRadians = rotationYRadians;
     this._actionDetails!.updateRotateRadians(
       rotateRadians,
       this._config!.maxScale,
     );
     // _editorConfig!.editActionDetailsIsChanged?.call(_editActionDetails);
-    this._rotateRadians = this._actionDetails!.rotateRadians;
     this._rotationYRadians = this._actionDetails!.rotationYRadians;
+    if (oldRotateRadians != this._actionDetails!.rotateRadians) {
+      this._drawImage();
+    }
     // });
   }
 
@@ -395,7 +390,6 @@ export struct ImageCropper {
       // _rotationYRadiansAnimation = null;
       //_rotateRadiansAnimation = null;
       this.init();
-      this._rotateRadians = 0;
       this._rotationYRadians = 0;
       //_editorConfig!.editActionDetailsIsChanged?.call(_editActionDetails);
     });
@@ -403,10 +397,20 @@ export struct ImageCropper {
 
   _drawImage(): void {
     let screenDestinationRect = this._actionDetails?.getFinalDestinationRect();
-    if (this.onReady && screenDestinationRect != undefined) {
+    if (this._imageContextReady && screenDestinationRect != undefined) {
       this.imageContext.reset();
+
+      if (this._actionDetails?.rotateRadians != 0) {
+        let transform: Matrix2D = new Matrix2D().identity();
+        transform.rotate(this._actionDetails?.rotateRadians, this._actionDetails?.screenCropRect?.center.dx,
+          this._actionDetails?.screenCropRect?.center.dy);
+        this.imageContext.setTransform(transform);
+      }
+
       this.imageContext.drawImage(this.image, screenDestinationRect!.left, screenDestinationRect!.top,
         screenDestinationRect!.width, screenDestinationRect!.height,);
+
+
     }
   }
 }

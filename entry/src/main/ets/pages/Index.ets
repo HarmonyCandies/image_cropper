@@ -16,9 +16,7 @@ struct Index {
   }
 
   async init(): Promise<void> {
-    // Stage模型
     const context: Context = getContext(this);
-    // 获取resourceManager资源管理器
     const resourceMgr: resourceManager.ResourceManager = context.resourceManager;
     let rfd = await resourceMgr.getRawFd('image.jpg');
     const imageSource: image.ImageSource = image.createImageSource(rfd);
@@ -31,11 +29,9 @@ struct Index {
   }
 
   async showNewImage(): Promise<void> {
-
     if (this.pixelMap != undefined) {
       this.pixelMap.release();
     }
-
 
     // this.pixelMap = await ImageEditor.instance.handleImageRawfile(this.rfd!, [option]);
 
@@ -66,12 +62,12 @@ struct Index {
   build() {
     Column() {
       Row() {
-        Button('Flip', { type: ButtonType.Normal, stateEffect: true }).onClick(() => {
+        Button('flip', { type: ButtonType.Normal, stateEffect: true }).onClick(() => {
           this.controller.flip();
         }).margin(5)
         Button('rotate', { type: ButtonType.Normal, stateEffect: true }).onClick(() => {
           this.controller.rotate(
-            // 10
+             10
           );
         }).margin(5)
         Button('reset', { type: ButtonType.Normal, stateEffect: true }).onClick(() => {
