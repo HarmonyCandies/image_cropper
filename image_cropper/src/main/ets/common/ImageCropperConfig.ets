@@ -22,7 +22,7 @@ export class CropAspectRatios {
   static ratio16_9: number = 16.0 / 9.0;
 }
 
-export  enum InitCropRectType {
+export enum InitCropRectType {
   /// Crop rectangle is based on the image's original boundaries.
   imageRect,
 
@@ -30,6 +30,29 @@ export  enum InitCropRectType {
   layoutRect,
 }
 
+
+
+export interface ImageCropperConfigInterface {
+  maxScale?: number;
+  cropRectPadding?: geometry.EdgeInsets;
+  cornerSize?: geometry.Size;
+  cornerColor?: common2D.Color;
+  lineColor?: common2D.Color;
+  lineHeight?: number;
+  editorMaskColorHandler?: EditorMaskColorHandler;
+  hitTestSize?: number;
+  animationDuration?: number;
+  tickerDuration?: number;
+  cropAspectRatio?: number | null;
+  initialCropAspectRatio?: number | null;
+  initCropRectType?: InitCropRectType;
+  cropLayerPainter?: ImageCropperLayerPainter;
+  speed?: number;
+  hitTestBehavior?: HitTestMode;
+  editActionDetailsIsChanged?: EditActionDetailsIsChanged;
+  reverseMousePointerScrollDirection?: boolean;
+  controller?: ImageCropperController;
+}
 
 export class ImageCropperConfig {
   maxScale: number;
@@ -52,58 +75,38 @@ export class ImageCropperConfig {
   reverseMousePointerScrollDirection: boolean;
   controller?: ImageCropperController;
 
-  constructor(
-    maxScale = 5.0,
-    cropRectPadding = new geometry.EdgeInsets(20, 20, 20, 20),
-    cornerSize = new geometry.Size(30, 5),
-    cornerColor?: common2D.Color,
-    lineColor?: common2D.Color,
-    lineHeight = 0.6,
-    editorMaskColorHandler?: EditorMaskColorHandler,
-    hitTestSize = 20.0,
-    animationDuration = 200,
-    tickerDuration = 400,
-    cropAspectRatio = CropAspectRatios.custom,
-    initialCropAspectRatio = CropAspectRatios.custom,
-    initCropRectType = InitCropRectType.imageRect,
-    cropLayerPainter = new ImageCropperLayerPainter(),
-    speed = 1.0,
-    hitTestBehavior = HitTestMode.Block,
-    editActionDetailsIsChanged?: EditActionDetailsIsChanged,
-    reverseMousePointerScrollDirection = false,
-    controller?: ImageCropperController,
-  ) {
-    if (lineHeight <= 0.0) {
+  constructor(config: ImageCropperConfigInterface = {}) {
+    this.maxScale = config.maxScale ?? 5.0;
+    this.cropRectPadding = config.cropRectPadding ?? new geometry.EdgeInsets(20, 20, 20, 20);
+    this.cornerSize = config.cornerSize ?? new geometry.Size(30, 5);
+    this.cornerColor = config.cornerColor;
+    this.lineColor = config.lineColor;
+    this.lineHeight = config.lineHeight ?? 0.6;
+    this.editorMaskColorHandler = config.editorMaskColorHandler;
+    this.hitTestSize = config.hitTestSize ?? 20.0;
+    this.animationDuration = config.animationDuration ?? 200;
+    this.tickerDuration = config.tickerDuration ?? 400;
+    this.cropAspectRatio = config.cropAspectRatio ?? CropAspectRatios.custom;
+    this.initialCropAspectRatio = config.initialCropAspectRatio ?? CropAspectRatios.custom;
+    this.initCropRectType = config.initCropRectType ?? InitCropRectType.imageRect;
+    this.cropLayerPainter = config.cropLayerPainter ?? new ImageCropperLayerPainter();
+    this.speed = config.speed ?? 1.0;
+    this.hitTestBehavior = config.hitTestBehavior ?? HitTestMode.Block;
+    this.editActionDetailsIsChanged = config.editActionDetailsIsChanged;
+    this.reverseMousePointerScrollDirection = config.reverseMousePointerScrollDirection ?? false;
+    this.controller = config.controller;
+
+    if (this.lineHeight <= 0.0) {
       throw new Error("lineHeight must be greater than 0");
     }
-    if (hitTestSize < 0.0) {
+    if (this.hitTestSize < 0.0) {
       throw new Error("hitTestSize must be non-negative");
     }
-    if (maxScale <= 0.0) {
+    if (this.maxScale <= 0.0) {
       throw new Error("maxScale must be greater than 0");
     }
-    if (speed <= 0.0) {
+    if (this.speed <= 0.0) {
       throw new Error("speed must be greater than 0");
     }
-
-    this.maxScale = maxScale;
-    this.cropRectPadding = cropRectPadding;
-    this.cornerSize = cornerSize;
-    this.cornerColor = cornerColor;
-    this.lineColor = lineColor;
-    this.lineHeight = lineHeight;
-    this.editorMaskColorHandler = editorMaskColorHandler;
-    this.hitTestSize = hitTestSize;
-    this.animationDuration = animationDuration;
-    this.tickerDuration = tickerDuration;
-    this.cropAspectRatio = cropAspectRatio;
-    this.initialCropAspectRatio = initialCropAspectRatio;
-    this.initCropRectType = initCropRectType;
-    this.cropLayerPainter = cropLayerPainter;
-    this.speed = speed;
-    this.hitTestBehavior = hitTestBehavior;
-    this.editActionDetailsIsChanged = editActionDetailsIsChanged;
-    this.reverseMousePointerScrollDirection = reverseMousePointerScrollDirection;
-    this.controller = controller;
   }
 }

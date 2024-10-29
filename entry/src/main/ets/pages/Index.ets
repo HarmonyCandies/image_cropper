@@ -9,6 +9,7 @@ struct Index {
   @State pixelMap: PixelMap | undefined = undefined;
   private imageInfo: image.ImageInfo | undefined = undefined;
   dialogController: CustomDialogController | null = null;
+  private controller: image_cropper.ImageCropperController = new image_cropper.ImageCropperController();
 
   aboutToAppear() {
     this.init();
@@ -64,16 +65,44 @@ struct Index {
 
   build() {
     Column() {
+      Row() {
+        Button('Flip', { type: ButtonType.Normal, stateEffect: true }).onClick(() => {
+          this.controller.flip();
+        }).margin(5)
+        Button('rotate', { type: ButtonType.Normal, stateEffect: true }).onClick(() => {
+          this.controller.rotate(
+            // 10
+          );
+        }).margin(5)
+        Button('reset', { type: ButtonType.Normal, stateEffect: true }).onClick(() => {
+          this.controller.reset();
+        }).margin(5)
+      }
+
       if (this.pixelMap != undefined) {
         image_cropper.ImageCropper(
           {
             image: this.pixelMap,
+            initCropperConfigHandler: (imageInfo: image.ImageInfo) => {
+              return new image_cropper.ImageCropperConfig(
+                {
+                  maxScale: 4,
+                  cropRectPadding: image_cropper.geometry.EdgeInsets.all(20),
+                  controller: this.controller,
+                  initCropRectType: image_cropper.InitCropRectType.imageRect,
+                  cropAspectRatio: image_cropper.CropAspectRatios.custom,
+                }
+              );
+            }
           }
         )
       }
+      Row() {
+        Text('测试')
+      }
     }
     .height('100%')
-    .width('100%')
+    .width('100%').expandSafeArea()
   }
 }
 

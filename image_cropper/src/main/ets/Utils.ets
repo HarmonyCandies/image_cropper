@@ -215,8 +215,10 @@ export function getDestinationRect(layoutRect: geometry.Rect, inputSize: geometr
 
   const dx = halfWidthDelta;
   const dy = halfHeightDelta;
-
-  return geometry.Rect.fromLTWH(dx, dy, destinationSize.width, destinationSize.height);
+  // Compute the final position and size of the destination rectangle.
+  let destinationPosition: geometry.Offset = layoutRect.topLeft.translate(dx, dy);
+  return geometry.Rect.fromLTWH(destinationPosition.dx, destinationPosition.dy, destinationSize.width,
+    destinationSize.height);
 }
 
 export function applyBoxFit(fit: BoxFit, inputSize: Size, outputSize: Size): FittedSizes {

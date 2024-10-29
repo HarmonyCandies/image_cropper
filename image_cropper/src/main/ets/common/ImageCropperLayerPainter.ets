@@ -227,18 +227,19 @@ class ImageCropperPainter {
 
       // Calculate the rotation origin (center of the canvas)
       const origin: geometry.Offset = rect.center;
-      const result: matrix4.Matrix4Transit = matrix4.identity();
-
-      result.translate({ x: origin.dx, y: origin.dy });
-      result.rotate({ z: 1, angle: NumberUtils.degrees(this.rotateRadians) });
-      result.translate({ x: -origin.dx, y: -origin.dy });
+      // const result: matrix4.Matrix4Transit = matrix4.identity();
+      //
+      // result.translate({ x: origin.dx, y: origin.dy });
+      // result.rotate({ z: 1, angle: NumberUtils.degrees(this.rotateRadians) });
+      // result.translate({ x: -origin.dx, y: -origin.dy });
 
 
       // Apply the transformation matrix
-      let xxx: drawing.Matrix = new drawing.Matrix();
+      let matrix: drawing.Matrix = new drawing.Matrix();
+      matrix.setRotation(NumberUtils.degrees(this.rotateRadians), origin.dx, origin.dy);
 
       // TODO
-      canvas.setMatrix(xxx);
+      canvas.setMatrix(matrix);
 
       // Adjust rect size to ensure the mask covers the whole area after rotation
       const diagonal: number = Math.sqrt(rect.width**2 + rect.height**2);
