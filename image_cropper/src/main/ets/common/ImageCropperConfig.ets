@@ -32,7 +32,7 @@ export enum InitCropRectType {
 }
 
 
-export interface ImageCropperConfigInterface {
+export interface ImageCropperConfigOptions {
   maxScale?: number;
   cropRectPadding?: geometry.EdgeInsets;
   cornerSize?: geometry.Size;
@@ -75,30 +75,30 @@ export class ImageCropperConfig {
   reverseMousePointerScrollDirection: boolean;
   controller?: ImageCropperController;
 
-  constructor(config: ImageCropperConfigInterface = {}) {
-    this.maxScale = config.maxScale ?? 5.0;
-    this.cropRectPadding = config.cropRectPadding ?? new geometry.EdgeInsets(20, 20, 20, 20);
-    this.cornerSize = config.cornerSize ?? new geometry.Size(30, 5);
+  constructor(options: ImageCropperConfigOptions = {}) {
+    this.maxScale = options.maxScale ?? 5.0;
+    this.cropRectPadding = options.cropRectPadding ?? new geometry.EdgeInsets(20, 20, 20, 20);
+    this.cornerSize = options.cornerSize ?? new geometry.Size(30, 5);
 
 
-    this.cornerColor = config.cornerColor ?? rgbToHex(103, 80, 164);
+    this.cornerColor = options.cornerColor ?? rgbToHex(103, 80, 164);
 
-    this.lineColor = config.lineColor ?? rgbToHex(254, 247, 255, 0.7);
+    this.lineColor = options.lineColor ?? rgbToHex(254, 247, 255, 0.7);
 
-    this.lineHeight = config.lineHeight ?? 0.6;
-    this.editorMaskColorHandler = config.editorMaskColorHandler ?? defaultEditorMaskColorHandler;
-    this.hitTestSize = config.hitTestSize ?? 20.0;
-    this.animationDuration = config.animationDuration ?? 200;
-    this.tickerDuration = config.tickerDuration ?? 400;
-    this.cropAspectRatio = config.cropAspectRatio ?? CropAspectRatios.custom;
-    this.initialCropAspectRatio = config.initialCropAspectRatio ?? CropAspectRatios.custom;
-    this.initCropRectType = config.initCropRectType ?? InitCropRectType.imageRect;
-    this.cropLayerPainter = config.cropLayerPainter ?? new ImageCropperLayerPainter();
-    this.speed = config.speed ?? 1.0;
-    this.hitTestBehavior = config.hitTestBehavior ?? HitTestMode.Block;
-    this.editActionDetailsIsChanged = config.editActionDetailsIsChanged;
-    this.reverseMousePointerScrollDirection = config.reverseMousePointerScrollDirection ?? false;
-    this.controller = config.controller;
+    this.lineHeight = options.lineHeight ?? 0.6;
+    this.editorMaskColorHandler = options.editorMaskColorHandler ?? defaultEditorMaskColorHandler;
+    this.hitTestSize = options.hitTestSize ?? 20.0;
+    this.animationDuration = options.animationDuration ?? 200;
+    this.tickerDuration = options.tickerDuration ?? 400;
+    this.cropAspectRatio = options.cropAspectRatio ?? CropAspectRatios.custom;
+    this.initialCropAspectRatio = options.initialCropAspectRatio ?? CropAspectRatios.custom;
+    this.initCropRectType = options.initCropRectType ?? InitCropRectType.imageRect;
+    this.cropLayerPainter = options.cropLayerPainter ?? new ImageCropperLayerPainter();
+    this.speed = options.speed ?? 1.0;
+    this.hitTestBehavior = options.hitTestBehavior ?? HitTestMode.Block;
+    this.editActionDetailsIsChanged = options.editActionDetailsIsChanged;
+    this.reverseMousePointerScrollDirection = options.reverseMousePointerScrollDirection ?? false;
+    this.controller = options.controller;
 
     if (this.lineHeight <= 0.0) {
       throw new Error("lineHeight must be greater than 0");

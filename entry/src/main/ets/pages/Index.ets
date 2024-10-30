@@ -63,11 +63,17 @@ struct Index {
     Column() {
       Row() {
         Button('flip', { type: ButtonType.Normal, stateEffect: true }).onClick(() => {
-          this.controller.flip();
+          this.controller.flip(
+            { animation: true }
+          );
         }).margin(5)
         Button('rotate', { type: ButtonType.Normal, stateEffect: true }).onClick(() => {
           this.controller.rotate(
-             10
+            {
+              degree: 90,
+              animation: true,
+              duration: 1000,
+            }
           );
         }).margin(5)
         Button('reset', { type: ButtonType.Normal, stateEffect: true }).onClick(() => {
@@ -93,20 +99,6 @@ struct Index {
           }
         )
       }
-      Row() {
-        Button('flip', { type: ButtonType.Normal, stateEffect: true }).onClick(() => {
-          this.controller.flip();
-        }).margin(5)
-        Button('rotate', { type: ButtonType.Normal, stateEffect: true }).onClick(() => {
-          this.controller.rotate(
-            10
-          );
-        }).margin(5)
-        Button('reset', { type: ButtonType.Normal, stateEffect: true }).onClick(() => {
-          this.controller.reset();
-        }).margin(5)
-      }
-
     }
     .height('100%')
     .width('100%').expandSafeArea()

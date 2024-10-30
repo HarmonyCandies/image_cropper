@@ -1,21 +1,26 @@
+export interface FlipOptions {
+  animation?: boolean,
+  duration?: number,
+}
+
+export interface RotateOptions {
+  degree?: number,
+  animation?: boolean,
+  duration?: number,
+  rotateCropRect?: boolean,
+}
 
 
 export class ImageCropperController {
   flip:
-    (animation?: boolean,
-      duration?: number,
-    ) => void = (animation: boolean = false,
-    duration: number = 200,) => {
+    (options:FlipOptions
+    ) => void = (options:FlipOptions) => {
   };
   reset: () => void = () => {
   };
   rotate: (
-    degree?: number,
-    animation?: boolean,
-    duration?: number,
-    rotateCropRect?: boolean,
+    options:RotateOptions,
 
-  ) => void = (degree: number = 90, animation: boolean = false,
-    duration: number = 200, rotateCropRect: boolean = true) => {
+  ) => void = (options:RotateOptions) => {
   };
 }

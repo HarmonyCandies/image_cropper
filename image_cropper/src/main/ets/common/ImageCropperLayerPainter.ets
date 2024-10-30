@@ -88,11 +88,11 @@ export class ImageCropperLayerPainter {
     canvas.save();
     canvas.fillStyle = maskColor;
     canvas.beginPath();
-    canvas.moveTo(0, 0);
-    canvas.lineTo(0, rect.height);
-    canvas.lineTo(rect.width, rect.height);
-    canvas.lineTo(rect.width, 0);
-    canvas.lineTo(0, 0);
+    canvas.moveTo(rect.left, rect.top);
+    canvas.lineTo(rect.left, rect.bottom);
+    canvas.lineTo(rect.right, rect.bottom);
+    canvas.lineTo(rect.right, rect.top);
+    canvas.lineTo(rect.left, rect.top);
     canvas.rect(cropRect.left, cropRect.top, cropRect.width,
       cropRect.height);
     canvas.fill();
