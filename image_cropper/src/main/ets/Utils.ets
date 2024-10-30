@@ -127,12 +127,16 @@ export class RectUtils {
     return RectUtils.isSame(rect!, other!);
   }
 
-  static containsOffset(rect: geometry.Rect, offset: geometry.Offset): boolean {
-    return NumberUtils.greaterThanOrEqualTo(offset.dx, rect.left) &&
+  static containsOffset(rect: geometry.Rect, offset: geometry.Offset, include: boolean = true): boolean {
+    return include ? (NumberUtils.greaterThanOrEqualTo(offset.dx, rect.left) &&
     NumberUtils.lessThanOrEqualTo(offset.dx, rect.right) &&
     NumberUtils.greaterThanOrEqualTo(offset.dy, rect.top) &&
-    NumberUtils.lessThanOrEqualTo(offset.dy, rect.bottom);
+    NumberUtils.lessThanOrEqualTo(offset.dy, rect.bottom)) : (NumberUtils.greaterThan(offset.dx, rect.left) &&
+    NumberUtils.lessThan(offset.dx, rect.right) &&
+    NumberUtils.greaterThan(offset.dy, rect.top) &&
+    NumberUtils.lessThan(offset.dy, rect.bottom));
   }
+
 
   static containsRect(rect: geometry.Rect, other: geometry.Rect): boolean {
     return NumberUtils.lessThanOrEqualTo(rect.left, other.left) &&
@@ -304,4 +308,34 @@ export class FittedSizes {
     this.source = source;
     this.destination = destination;
   }
+}
+
+export function defaultEditorMaskColorHandler(pointerDown: boolean): string | number | CanvasGradient | CanvasPattern {
+  return rgbToHex(254, 247, 255, pointerDown ? 0.4 : 0.8)
+}
+
+export function rgbToHex(r: number, g: number, b: number, opacity: number = 1): string {
+  const toHex = (num: number) => num.toString(16).padStart(2, '0').toUpperCase();
+  return `#${toHex(255 * opacity)}${toHex(r)}${toHex(g)}${toHex(b)}`;
+}
+
+export function debounce(
+  fn: () => void,
+  duration: number
+): ()=>void {
+  let timeout: number | null = null;
+
+  return ()=>{
+    if (timeout) {
+      clearTimeout(timeout);
+    }
+    timeout = setTimeout(() => {
+      timeout = null;
+      fn();
+    }, duration);
+  }
+}
+
+export function clamp(value: number, low: number, high: number): number {
+  return Math.min(Math.max(value, low), high);
 }

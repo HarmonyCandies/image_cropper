@@ -5,8 +5,9 @@ import { drawing } from '@kit.ArkGraphics2D';
 import { Matrix4, Vector4 } from '../model/Matrix4';
 
 export class ImageCropperActionDetails {
+  // 没有 cropRectPadding 限制的
   private _layoutRect?: geometry.Rect;
-  private _screenDestinationRect?: geometry.Rect;
+  private _destinationRect?: geometry.Rect;
   private _rawDestinationRect?: geometry.Rect;
   totalScale: number = 1.0;
   preTotalScale: number = 1.0;
@@ -19,6 +20,17 @@ export class ImageCropperActionDetails {
   originalAspectRatio: number | null = null;
   // Crop aspect ratio
   private _cropAspectRatio: number | null = null;
+
+  get layoutRect(): geometry.Rect | undefined {
+    return this._layoutRect;
+  }
+
+  get cropRectLayoutRect(): geometry.Rect | undefined {
+    if (this.cropRectPadding != null) {
+      return this.cropRectPadding!.deflateRect(this._layoutRect!);
+    }
+    return this._layoutRect;
+  }
 
   get originalCropAspectRatio(): number | null {
     return this._cropAspectRatio;
@@ -37,12 +49,12 @@ export class ImageCropperActionDetails {
     }
   }
 
-  get screenDestinationRect(): geometry.Rect | undefined {
-    return this._screenDestinationRect;
+  get destinationRect(): geometry.Rect | undefined {
+    return this._destinationRect;
   }
 
-  setScreenDestinationRect(value: geometry.Rect): void {
-    this._screenDestinationRect = value;
+  setDestinationRect(value: geometry.Rect): void {
+    this._destinationRect = value;
   }
 
   private _rotateRadians: number = 0.0;
@@ -69,7 +81,7 @@ export class ImageCropperActionDetails {
   }
 
   get needCrop(): boolean {
-    return this.screenCropRect !== this.screenDestinationRect;
+    return this.cropRect !== this.destinationRect;
   }
 
   get rotateDegrees(): number {
@@ -96,64 +108,54 @@ export class ImageCropperActionDetails {
     return this.rotateRadians % (2 * Math.PI) === 0;
   }
 
-  get layerDestinationRect(): geometry.Rect | undefined {
-    return this.screenDestinationRect?.shift(this.layoutTopLeft!);
-  }
-
-  get layoutTopLeft(): geometry.Offset | undefined {
-    return this._layoutRect?.topLeft;
-  }
 
   get rawDestinationRect(): geometry.Rect | undefined {
     return this._rawDestinationRect;
   }
 
-  get screenCropRect(): geometry.Rect | undefined {
-    return this.cropRect?.shift(this.layoutTopLeft!);
-  }
 
   initRect(layoutRect: geometry.Rect, destinationRect: geometry.Rect): void {
     if (this._layoutRect !== layoutRect) {
       this._layoutRect = layoutRect;
-      this._screenDestinationRect = undefined;
+      this._destinationRect = undefined;
     }
 
     if (this._rawDestinationRect !== destinationRect) {
       this._rawDestinationRect = destinationRect;
-      this._screenDestinationRect = undefined;
+      this._destinationRect = undefined;
     }
   }
 
   getFinalDestinationRect(): geometry.Rect {
-    if (this.screenDestinationRect) {
+    if (this.destinationRect) {
       const scaleDelta = this.totalScale / this.preTotalScale;
       if (scaleDelta != 1.0) {
-        let focalPoint = this.screenFocalPoint ?? this._screenDestinationRect!.center;
+        let focalPoint = this.screenFocalPoint ?? this._destinationRect!.center;
 
         focalPoint = new geometry.Offset(
-          Math.max(Math.min(focalPoint.dx, this._screenDestinationRect!.right), this._screenDestinationRect!.left),
-          Math.max(Math.min(focalPoint.dy, this._screenDestinationRect!.bottom), this._screenDestinationRect!.top)
+          Math.max(Math.min(focalPoint.dx, this._destinationRect!.right), this._destinationRect!.left),
+          Math.max(Math.min(focalPoint.dy, this._destinationRect!.bottom), this._destinationRect!.top)
         );
 
-        this._screenDestinationRect = geometry.Rect.fromLTWH(
-          focalPoint.dx - (focalPoint.dx - this._screenDestinationRect!.left) * scaleDelta,
-          focalPoint.dy - (focalPoint.dy - this._screenDestinationRect!.top) * scaleDelta,
-          this._screenDestinationRect!.width * scaleDelta,
-          this._screenDestinationRect!.height * scaleDelta
+        this._destinationRect = geometry.Rect.fromLTWH(
+          focalPoint.dx - (focalPoint.dx - this._destinationRect!.left) * scaleDelta,
+          focalPoint.dy - (focalPoint.dy - this._destinationRect!.top) * scaleDelta,
+          this._destinationRect!.width * scaleDelta,
+          this._destinationRect!.height * scaleDelta
         );
         this.preTotalScale = this.totalScale;
         this.delta = geometry.Offset.zero;
       } else {
-        if (this._screenDestinationRect !== this.screenCropRect) {
-          this._screenDestinationRect =
-            this._screenDestinationRect!.shift(this.delta);
+        if (this._destinationRect !== this.cropRect) {
+          this._destinationRect =
+            this._destinationRect!.shift(this.delta);
         }
         this.delta = geometry.Offset.zero;
       }
     } else {
-      this._screenDestinationRect = this.getRectWithScale(this._rawDestinationRect!, this.totalScale);
+      this._destinationRect = this.getRectWithScale(this._rawDestinationRect!, this.totalScale);
     }
-    return this._screenDestinationRect!;
+    return this._destinationRect!;
   }
 
   getRectWithScale(rect: geometry.Rect, totalScale: number): geometry.Rect {
@@ -170,7 +172,7 @@ export class ImageCropperActionDetails {
 
 
   getTransform(): Matrix4 {
-    const origin: geometry.Offset = this._layoutRect?.center ?? this.screenDestinationRect?.center!;
+    const origin: geometry.Offset = this._layoutRect?.center ?? this.destinationRect?.center!;
     const result = Matrix4.identity();
 
     result.translate(origin.dx, origin.dy);
@@ -186,7 +188,7 @@ export class ImageCropperActionDetails {
   }
 
   getImagePath(rect?: geometry.Rect): drawing.Path {
-    rect = rect ?? this.screenDestinationRect!;
+    rect = rect ?? this.destinationRect!;
 
     const result = this.getTransform();
 
@@ -210,6 +212,7 @@ export class ImageCropperActionDetails {
     path.lineTo(rotatedCorners[2].dx, rotatedCorners[2].dy);
     path.lineTo(rotatedCorners[3].dx, rotatedCorners[3].dy);
     path.close();
+
     return path;
   }
 
@@ -231,7 +234,7 @@ export class ImageCropperActionDetails {
           this.cropRect!.height * (1 / scaleDelta),
         );
       } else {
-        this.screenFocalPoint = this.screenDestinationRect!.center;
+        this.screenFocalPoint = this.destinationRect!.center;
         this.preTotalScale = this.totalScale;
         this.totalScale = Math.max(this.totalScale * scaleDelta, this.totalScale);
       }
@@ -241,13 +244,13 @@ export class ImageCropperActionDetails {
   scaleToFitCropRect(): number {
     let result = this.getTransform();
 
-    const rect = this._screenDestinationRect!;
+    const rect = this._destinationRect!;
 
     const rectVertices: geometry.Offset[] = [
-      this.screenCropRect!.topLeft,
-      this.screenCropRect!.topRight,
-      this.screenCropRect!.bottomRight,
-      this.screenCropRect!.bottomLeft,
+      this.cropRect!.topLeft,
+      this.cropRect!.topRight,
+      this.cropRect!.bottomRight,
+      this.cropRect!.bottomLeft,
     ].map((element: geometry.Offset) => {
       const cornerVector = new Vector4(element.dx, element.dy, 0.0, 1.0);
       const newCornerVector = result.transform(cornerVector);
@@ -303,15 +306,15 @@ export class ImageCropperActionDetails {
       dy * Math.cos(this.rotateRadians) - dx * Math.sin(this.rotateRadians);
 
     let offset = new geometry.Offset(transformedDx, transformedDy);
-    let rect = this.screenDestinationRect!.shift(offset);
+    let rect = this.destinationRect!.shift(offset);
 
     const result = this.getTransform();
 
     const rectVertices = [
-      this.screenCropRect!.topLeft,
-      this.screenCropRect!.topRight,
-      this.screenCropRect!.bottomRight,
-      this.screenCropRect!.bottomLeft,
+      this.cropRect!.topLeft,
+      this.cropRect!.topRight,
+      this.cropRect!.bottomRight,
+      this.cropRect!.bottomLeft,
     ].map((element: geometry.Offset) => {
       const cornerVector = new Vector4(element.dx, element.dy, 0.0, 1.0);
       const newCornerVector = result.transform(cornerVector);
@@ -332,7 +335,7 @@ export class ImageCropperActionDetails {
       if (!OffsetUtils.isSame(nearestOffset, element)) {
         offset =
           new geometry.Offset(offset.dx - (nearestOffset.dx - element.dx), offset.dy - (nearestOffset.dy - element.dy));
-        rect = this._screenDestinationRect = this.screenDestinationRect!.shift(offset);
+        rect = this._destinationRect = this.destinationRect!.shift(offset);
         // 清除 offset
         offset = geometry.Offset.zero;
       }
@@ -349,28 +352,28 @@ export class ImageCropperActionDetails {
 
     const result = this.getTransform();
     const rectVertices = [
-      this.screenCropRect!.topLeft,
-      this.screenCropRect!.topRight,
-      this.screenCropRect!.bottomRight,
-      this.screenCropRect!.bottomLeft,
+      this.cropRect!.topLeft,
+      this.cropRect!.topRight,
+      this.cropRect!.bottomRight,
+      this.cropRect!.bottomLeft,
     ].map((element: geometry.Offset) => {
       const cornerVector = new Vector4(element.dx, element.dy, 0.0, 1.0);
       const newCornerVector = result.transform(cornerVector);
       return new geometry.Offset(newCornerVector.x, newCornerVector.y);
     });
 
-    let focalPoint = this.screenFocalPoint ?? this.screenDestinationRect!.center;
+    let focalPoint = this.screenFocalPoint ?? this.destinationRect!.center;
 
     focalPoint = new geometry.Offset(
-      Math.max(this.screenDestinationRect!.left, Math.min(focalPoint.dx, this.screenDestinationRect!.right)),
-      Math.max(this.screenDestinationRect!.top, Math.min(focalPoint.dy, this.screenDestinationRect!.bottom))
+      Math.max(this.destinationRect!.left, Math.min(focalPoint.dx, this.destinationRect!.right)),
+      Math.max(this.destinationRect!.top, Math.min(focalPoint.dy, this.destinationRect!.bottom))
     );
 
     let rect = geometry.Rect.fromLTWH(
-      focalPoint.dx - (focalPoint.dx - this.screenDestinationRect!.left) * scaleDelta,
-      focalPoint.dy - (focalPoint.dy - this.screenDestinationRect!.top) * scaleDelta,
-      this.screenDestinationRect!.width * scaleDelta,
-      this.screenDestinationRect!.height * scaleDelta
+      focalPoint.dx - (focalPoint.dx - this.destinationRect!.left) * scaleDelta,
+      focalPoint.dy - (focalPoint.dy - this.destinationRect!.top) * scaleDelta,
+      this.destinationRect!.width * scaleDelta,
+      this.destinationRect!.height * scaleDelta
     );
 
     let fixed = false;
@@ -397,7 +400,7 @@ export class ImageCropperActionDetails {
     }
 
     if (fixed) {
-      this._screenDestinationRect = rect;
+      this._destinationRect = rect;
       // scale has already applied
       this.preTotalScale = totalScale;
     }
@@ -405,18 +408,17 @@ export class ImageCropperActionDetails {
     this.totalScale = totalScale;
   }
 
-  updateCropRect(cropRect: geometry.Rect, layoutTopLeft: geometry.Offset, screenDestinationRect: geometry.Rect,
+  updateCropRect(cropRect: geometry.Rect,
   ): geometry.Rect {
-    let screenCropRect = cropRect.shift(layoutTopLeft);
     let result = this.getTransform();
-
+    let screenDestinationRect = this._destinationRect!;
     const rect = screenDestinationRect;
 
     const rectVertices: geometry.Offset[] = [
-      screenCropRect.topLeft,
-      screenCropRect.topRight,
-      screenCropRect.bottomRight,
-      screenCropRect.bottomLeft,
+      cropRect.topLeft,
+      cropRect.topRight,
+      cropRect.bottomRight,
+      cropRect.bottomLeft,
     ].map((element) => {
       const cornerVector = new Vector4(element.dx, element.dy, 0.0, 1.0);
       const newCornerVector = result.transform(cornerVector);
@@ -455,13 +457,13 @@ export class ImageCropperActionDetails {
       const rect2 = geometry.Rect.fromPoints(newOffsets[1], newOffsets[3]);
 
       if (rect1.size < rect2.size) {
-        screenCropRect = rect1;
+        cropRect = rect1;
       } else {
-        screenCropRect = rect2;
+        cropRect = rect2;
       }
     }
 
-    return screenCropRect.shift(new geometry.Offset(-layoutTopLeft.dx, -layoutTopLeft.dy));
+    return cropRect;
   }
 
   getLineRectIntersections(rect: geometry.Rect, p1: geometry.Offset, p2: geometry.Offset): geometry.Offset[] {
@@ -538,8 +540,8 @@ export class ImageCropperActionDetails {
     const copy = new ImageCropperActionDetails();
 
     copy._layoutRect = layoutRect !== undefined ? layoutRect : this._layoutRect;
-    copy._screenDestinationRect =
-      screenDestinationRect !== undefined ? screenDestinationRect : this.screenDestinationRect;
+    copy._destinationRect =
+      screenDestinationRect !== undefined ? screenDestinationRect : this.destinationRect;
     copy._rawDestinationRect = rawDestinationRect !== undefined ? rawDestinationRect : this.rawDestinationRect;
     copy.totalScale = totalScale !== undefined ? totalScale : this.totalScale;
     copy.preTotalScale = preTotalScale !== undefined ? preTotalScale : this.preTotalScale;
@@ -557,7 +559,7 @@ export class ImageCropperActionDetails {
 
   equalTo(other: ImageCropperActionDetails): boolean {
     return RectUtils.isSameNullable(this._layoutRect, other._layoutRect)
-      && RectUtils.isSameNullable(this._screenDestinationRect, other._screenDestinationRect)
+      && RectUtils.isSameNullable(this._destinationRect, other._destinationRect)
       && RectUtils.isSameNullable(this._rawDestinationRect, other._rawDestinationRect)
       && RectUtils.isSameNullable(this.cropRect, other.cropRect)
       && NumberUtils.equalTo(this.totalScale, other.totalScale)

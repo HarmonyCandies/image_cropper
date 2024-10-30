@@ -82,7 +82,7 @@ struct Index {
             initCropperConfigHandler: (imageInfo: image.ImageInfo) => {
               return new image_cropper.ImageCropperConfig(
                 {
-                  maxScale: 4,
+                  maxScale: 8,
                   cropRectPadding: image_cropper.geometry.EdgeInsets.all(20),
                   controller: this.controller,
                   initCropRectType: image_cropper.InitCropRectType.imageRect,
@@ -94,8 +94,19 @@ struct Index {
         )
       }
       Row() {
-        Text('测试')
+        Button('flip', { type: ButtonType.Normal, stateEffect: true }).onClick(() => {
+          this.controller.flip();
+        }).margin(5)
+        Button('rotate', { type: ButtonType.Normal, stateEffect: true }).onClick(() => {
+          this.controller.rotate(
+            10
+          );
+        }).margin(5)
+        Button('reset', { type: ButtonType.Normal, stateEffect: true }).onClick(() => {
+          this.controller.reset();
+        }).margin(5)
       }
+
     }
     .height('100%')
     .width('100%').expandSafeArea()

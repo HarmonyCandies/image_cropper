@@ -4,7 +4,7 @@ import { image } from '@kit.ImageKit';
 import { ImageCropperConfig } from './common/ImageCropperConfig';
 
 /// Get editor mask color base on pointerDown
-export declare type EditorMaskColorHandler = (pointerDown: boolean) => common2D.Color;
+export declare type EditorMaskColorHandler = (pointerDown: boolean) => string | number | CanvasGradient | CanvasPattern;
 
 export declare type EditActionDetailsIsChanged = (details: ImageCropperActionDetails | null) => void;
 
