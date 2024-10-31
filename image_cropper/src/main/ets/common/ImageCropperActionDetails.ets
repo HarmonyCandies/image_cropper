@@ -5,7 +5,6 @@ import { drawing } from '@kit.ArkGraphics2D';
 import { Matrix4, Vector4 } from '../model/Matrix4';
 
 export class ImageCropperActionDetails {
-  // 没有 cropRectPadding 限制的
   private _layoutRect?: geometry.Rect;
   private _destinationRect?: geometry.Rect;
   private _rawDestinationRect?: geometry.Rect;
@@ -30,6 +29,13 @@ export class ImageCropperActionDetails {
       return this.cropRectPadding!.deflateRect(this._layoutRect!);
     }
     return this._layoutRect;
+  }
+
+  get cropRectLayoutRectCenter(): geometry.Offset {
+    if (this.cropRectPadding != undefined && this._layoutRect != undefined) {
+      return this.cropRectPadding!.deflateRect(this._layoutRect!).center;
+    }
+    return this._layoutRect?.center ?? geometry.Offset.zero;
   }
 
   get originalCropAspectRatio(): number | null {
@@ -172,7 +178,7 @@ export class ImageCropperActionDetails {
 
 
   getTransform(): Matrix4 {
-    const origin: geometry.Offset = this._layoutRect?.center ?? this.destinationRect?.center!;
+    const origin: geometry.Offset = this.cropRectLayoutRectCenter;
     const result = Matrix4.identity();
 
     result.translate(origin.dx, origin.dy);
@@ -234,7 +240,7 @@ export class ImageCropperActionDetails {
           this.cropRect!.height * (1 / scaleDelta),
         );
       } else {
-        this.screenFocalPoint = this.destinationRect!.center;
+        this.screenFocalPoint = this.cropRectLayoutRectCenter;
         this.preTotalScale = this.totalScale;
         this.totalScale = Math.max(this.totalScale * scaleDelta, this.totalScale);
       }
@@ -362,7 +368,7 @@ export class ImageCropperActionDetails {
       return new geometry.Offset(newCornerVector.x, newCornerVector.y);
     });
 
-    let focalPoint = this.screenFocalPoint ?? this.destinationRect!.center;
+    let focalPoint = this.screenFocalPoint ?? this.cropRectLayoutRectCenter;
 
     focalPoint = new geometry.Offset(
       Math.max(this.destinationRect!.left, Math.min(focalPoint.dx, this.destinationRect!.right)),

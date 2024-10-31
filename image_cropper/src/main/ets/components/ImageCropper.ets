@@ -114,7 +114,7 @@ export struct ImageCropper {
   _startCropRectAutoCenterAnimation
   (begin: geometry.Rect, end: geometry.Rect): void {
     let options: AnimatorOptions = {
-      duration: 100000?? this._config!.animationDuration,
+      duration: this._config!.animationDuration,
       easing: "linear",
       delay: 0,
       fill: "forwards",
@@ -558,8 +558,9 @@ export struct ImageCropper {
 
       if (this._actionDetails?.rotateRadians != 0) {
         let transform: Matrix2D = new Matrix2D().identity();
-        transform.rotate(this._actionDetails?.rotateRadians, this._actionDetails?.cropRect?.center.dx,
-          this._actionDetails?.cropRect?.center.dy);
+        const origin: geometry.Offset = this._actionDetails!.cropRectLayoutRectCenter;
+        transform.rotate(this._actionDetails?.rotateRadians, origin.dx,
+          origin.dy);
         this.imageContext.setTransform(transform);
       }
 
@@ -582,8 +583,9 @@ export struct ImageCropper {
 
       if (rotateRadians != 0) {
         let transform: Matrix2D = new Matrix2D().identity();
-        transform.rotate(rotateRadians, layoutRect.center.dx,
-          layoutRect.center.dy);
+        let center = this._actionDetails!.cropRectLayoutRectCenter;
+        transform.rotate(rotateRadians, center.dx,
+          center.dy);
         this.cropLayerContext.setTransform(transform);
       }
       // Adjust rect size to ensure the mask covers the whole area after rotation
@@ -717,7 +719,6 @@ export struct ImageCropper {
         break;
       default:
     }
-
 
 
     /// make sure crop rect doesn't out of image rect
@@ -917,8 +918,7 @@ export struct ImageCropper {
     this._actionDetails!.cropRect = newScreenCropRect;
 
 
-    let
-      totalScale = this._actionDetails!.totalScale * scale;
+    let totalScale = this._actionDetails!.totalScale * scale;
     this._actionDetails!.setDestinationRect(newScreenDestinationRect);
     this._actionDetails!.totalScale = totalScale;
     this._actionDetails!.preTotalScale = totalScale;
@@ -929,32 +929,39 @@ export struct ImageCropper {
   }
 
   _updateUIIfNeed(fn: () => void) {
+    if (this._actionDetails == null) {
+      return;
+    }
+    let oldTotalScale = this._actionDetails!.totalScale;
+    let oldDelta = this._actionDetails!.delta;
+    let oldDestinationRect = this._actionDetails!.destinationRect;
+    let oldRotateRadians = this._actionDetails!.rotateRadians;
 
-    let oldTotalScale = this._actionDetails?.totalScale;
-    let oldDelta = this._actionDetails?.delta;
-    let oldDestinationRect = this._actionDetails?.destinationRect;
-    let oldRotateRadians = this._actionDetails?.rotateRadians;
 
+    let oldRotationYRadians = this._actionDetails!.rotationYRadians;
 
-    let oldRotationYRadians = this._actionDetails?.rotationYRadians;
-
-    let oldCropRect = this._actionDetails?.cropRect;
+    let oldCropRect = this._actionDetails!.cropRect;
     let oldPointerDown = this._pointerDown;
     let oldCopRectRotateRadians = this._cropRectRotateRadians;
     fn();
 
-    if (oldTotalScale != this._actionDetails?.totalScale || oldDelta != this._actionDetails?.delta ||
-      oldDestinationRect != this._actionDetails?.destinationRect ||
-      oldRotateRadians != this._actionDetails?.rotateRadians) {
+    if (NumberUtils.equalToNullable(oldTotalScale, this._actionDetails?.totalScale) ||
+      !OffsetUtils.isSame(oldDelta!, this._actionDetails!.delta) ||
+      !RectUtils.isSameNullable(oldDestinationRect, this._actionDetails?.destinationRect) ||
+      !NumberUtils.equalToNullable(oldRotateRadians, this._actionDetails!.rotateRadians)
+    ) {
       this._drawImage();
     }
 
-    if (oldRotationYRadians != this._actionDetails?.rotationYRadians) {
+    if (!NumberUtils.equalToNullable(oldRotationYRadians, this._actionDetails?.rotationYRadians)) {
       this._rotationYRadians = this._actionDetails!.rotationYRadians;
     }
 
-    if (oldCropRect != this._actionDetails?.cropRect || oldPointerDown != this._pointerDown ||
-      oldCopRectRotateRadians != this._cropRectRotateRadians) {
+    if (
+      !RectUtils.isSameNullable(oldCropRect, this._actionDetails?.cropRect)
+        || oldPointerDown != this._pointerDown ||
+        !NumberUtils.equalToNullable(oldCopRectRotateRadians, this._cropRectRotateRadians)
+    ) {
       this._drawLayer();
     }
   }

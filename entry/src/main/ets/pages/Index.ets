@@ -7,7 +7,6 @@ import { image } from '@kit.ImageKit';
 @Component
 struct Index {
   @State pixelMap: PixelMap | undefined = undefined;
-  private imageInfo: image.ImageInfo | undefined = undefined;
   dialogController: CustomDialogController | null = null;
   private controller: image_cropper.ImageCropperController = new image_cropper.ImageCropperController();
 
@@ -18,14 +17,13 @@ struct Index {
   async init(): Promise<void> {
     const context: Context = getContext(this);
     const resourceMgr: resourceManager.ResourceManager = context.resourceManager;
-    let rfd = await resourceMgr.getRawFd('image.jpg');
+    let rfd = await resourceMgr.getRawFd('gwen_jf.jpg');
     const imageSource: image.ImageSource = image.createImageSource(rfd);
 
     let decodingOptions: image.DecodingOptions = {
       sampleSize: 1,
     };
     this.pixelMap = await imageSource.createPixelMap(decodingOptions);
-    this.imageInfo = await this.pixelMap!.getImageInfo();
   }
 
   async showNewImage(): Promise<void> {
@@ -72,7 +70,7 @@ struct Index {
             {
               degree: 90,
               animation: true,
-              duration: 1000,
+              // duration: 1000,
             }
           );
         }).margin(5)
