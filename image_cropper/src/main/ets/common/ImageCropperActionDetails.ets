@@ -121,12 +121,12 @@ export class ImageCropperActionDetails {
 
 
   initRect(layoutRect: geometry.Rect, destinationRect: geometry.Rect): void {
-    if (this._layoutRect !== layoutRect) {
+    if (!RectUtils.isSameNullable(this._layoutRect, layoutRect)) {
       this._layoutRect = layoutRect;
       this._destinationRect = undefined;
     }
 
-    if (this._rawDestinationRect !== destinationRect) {
+    if (!RectUtils.isSameNullable(this._rawDestinationRect, destinationRect)) {
       this._rawDestinationRect = destinationRect;
       this._destinationRect = undefined;
     }
@@ -240,7 +240,7 @@ export class ImageCropperActionDetails {
           this.cropRect!.height * (1 / scaleDelta),
         );
       } else {
-        this.screenFocalPoint = this.cropRectLayoutRectCenter;
+        this.screenFocalPoint = null;
         this.preTotalScale = this.totalScale;
         this.totalScale = Math.max(this.totalScale * scaleDelta, this.totalScale);
       }
@@ -263,18 +263,38 @@ export class ImageCropperActionDetails {
       return new geometry.Offset(newCornerVector.x, newCornerVector.y);
     });
 
-    const scaleDelta = this.scaleToFit(rectVertices, rect, rect.center);
+    const scaleDelta = this.scaleToFit(rectVertices, rect,);
     return scaleDelta;
   }
+
+  scaleToFitImageRect(): number {
+    let result = this.getTransform();
+
+    const rect = this._destinationRect!;
+
+    const rectVertices: geometry.Offset[] = [
+      this.cropRect!.topLeft,
+      this.cropRect!.topRight,
+      this.cropRect!.bottomRight,
+      this.cropRect!.bottomLeft,
+    ].map((element: geometry.Offset) => {
+      const cornerVector = new Vector4(element.dx, element.dy, 0.0, 1.0);
+      const newCornerVector = result.transform(cornerVector);
+      return new geometry.Offset(newCornerVector.x, newCornerVector.y);
+    });
+
+    const scaleDelta = this.scaleToFit1(rectVertices, rect,);
+    return scaleDelta;
+  }
+
 
   scaleToFit(
     rectVertices: geometry.Offset[],
     rect: geometry.Rect,
-    center: geometry.Offset,
   ): number {
     let scaleDelta = 0.0;
     let contains = 0;
-
+    let center: geometry.Offset = rect.center;
     for (const element of rectVertices) {
       if (RectUtils.containsOffset(rect, element)) {
         contains++;
@@ -288,6 +308,39 @@ export class ImageCropperActionDetails {
 
       if (x > halfWidth || y > halfHeight) {
         scaleDelta = Math.max(scaleDelta, Math.max(x / halfWidth, y / halfHeight));
+      }
+    }
+
+    if (contains === 4) {
+      return -1;
+    }
+
+    return scaleDelta;
+  }
+
+  scaleToFit1(
+    rectVertices: geometry.Offset[],
+    rect: geometry.Rect,
+  ): number {
+    let scaleDelta = 0.0;
+    let contains = 0;
+    let center: geometry.Offset = rect.center;
+    let cropRectCenter = rectVertices[0].add(rectVertices[2]).divide(2);
+    // if (!RectUtils.containsOffset(rect, cropRectCenter)) {
+    //   // can't do
+    //   return;
+    // }
+    for (const element of rectVertices) {
+      if (RectUtils.containsOffset(rect, element)) {
+        contains++;
+        continue;
+      }
+
+      let list = this.getLineRectIntersections(rect, element, cropRectCenter);
+      if (list.length > 0) {
+        scaleDelta = Math.min(scaleDelta,
+          Math.sqrt(Math.abs(list[0].dx - cropRectCenter.dx)**2 + Math.abs(list[0].dy - cropRectCenter.dy)**2) /
+          Math.sqrt(Math.abs(element.dx - cropRectCenter.dx)**2 + Math.abs(element.dy - cropRectCenter.dy)**2));
       }
     }
 

@@ -316,7 +316,7 @@ export function defaultEditorMaskColorHandler(pointerDown: boolean): string | nu
 
 export function rgbToHex(r: number, g: number, b: number, opacity: number = 1): string {
   const toHex = (num: number) => num.toString(16).padStart(2, '0').toUpperCase();
-  return `#${toHex(255 * opacity)}${toHex(r)}${toHex(g)}${toHex(b)}`;
+  return `#${toHex(parseInt((255 * opacity).toString(),10))}${toHex(r)}${toHex(g)}${toHex(b)}`;
 }
 
 export function debounce(
