@@ -973,7 +973,7 @@ export struct ImageCropper {
     let oldCopRectRotateRadians = this._cropRectRotateRadians;
     fn();
 
-    if (NumberUtils.equalToNullable(oldTotalScale, this._actionDetails?.totalScale) ||
+    if (!NumberUtils.equalToNullable(oldTotalScale, this._actionDetails?.totalScale) ||
       !OffsetUtils.isSame(oldDelta!, this._actionDetails!.delta) ||
       !RectUtils.isSameNullable(oldDestinationRect, this._actionDetails?.destinationRect) ||
       !NumberUtils.equalToNullable(oldRotateRadians, this._actionDetails!.rotateRadians)
@@ -1202,9 +1202,8 @@ export struct ImageCropper {
       if (totalScale * scaleDelta > this._config!.maxScale) {
         this._actionDetails!.screenFocalPoint = null;
         this._actionDetails!.preTotalScale = totalScale;
-        this._actionDetails!.totalScale = totalScale * scaleDelta;
+        this._actionDetails!.totalScale = this._config!.maxScale;
         this._actionDetails!.getFinalDestinationRect();
-
         scaleDelta = this._actionDetails!.scaleToFitImageRect();
         if (scaleDelta > 0) {
           newCropRect = geometry.Rect.fromCenter(
@@ -1212,6 +1211,9 @@ export struct ImageCropper {
             newCropRect!.width * scaleDelta,
             newCropRect!.height * scaleDelta,
           );
+        }
+        else {
+          this._actionDetails!.updateDelta(geometry.Offset.zero);
         }
       } else {
         this._actionDetails!.screenFocalPoint = null;

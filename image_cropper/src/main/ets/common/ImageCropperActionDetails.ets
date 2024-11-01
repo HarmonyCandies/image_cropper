@@ -228,17 +228,27 @@ export class ImageCropperActionDetails {
 
   updateRotateRadians(rotateRadians: number, maxScale: number): void {
     this.rotateRadians = rotateRadians;
-    const scaleDelta = this.scaleToFitCropRect();
+    let scaleDelta = this.scaleToFitCropRect();
 
     if (scaleDelta > 0) {
       // can't scale image
       // so we should scale the crop rect
       if (this.totalScale * scaleDelta > maxScale) {
-        this.cropRect = geometry.Rect.fromCenter(
-          this.cropRect!.center,
-          this.cropRect!.width * (1 / scaleDelta),
-          this.cropRect!.height * (1 / scaleDelta),
-        );
+        this.screenFocalPoint = null;
+        this.preTotalScale = this.totalScale;
+        this.totalScale = maxScale;
+        this.getFinalDestinationRect();
+        scaleDelta = this.scaleToFitImageRect();
+        if (scaleDelta > 0) {
+          this.cropRect = geometry.Rect.fromCenter(
+            this.cropRect!.center,
+            this.cropRect!.width * scaleDelta,
+            this.cropRect!.height * scaleDelta,
+          );
+        }
+        else {
+          this.updateDelta(geometry.Offset.zero);
+        }
       } else {
         this.screenFocalPoint = null;
         this.preTotalScale = this.totalScale;
@@ -283,7 +293,7 @@ export class ImageCropperActionDetails {
       return new geometry.Offset(newCornerVector.x, newCornerVector.y);
     });
 
-    const scaleDelta = this.scaleToFit1(rectVertices, rect,);
+    const scaleDelta = this._scaleToFitImageRect(rectVertices, rect,);
     return scaleDelta;
   }
 
@@ -318,13 +328,13 @@ export class ImageCropperActionDetails {
     return scaleDelta;
   }
 
-  scaleToFit1(
+  _scaleToFitImageRect(
     rectVertices: geometry.Offset[],
     rect: geometry.Rect,
   ): number {
-    let scaleDelta = 0.0;
+    let scaleDelta= Infinity;
     let contains = 0;
-    let center: geometry.Offset = rect.center;
+    // let center: geometry.Offset = rect.center;
     let cropRectCenter = rectVertices[0].add(rectVertices[2]).divide(2);
     // if (!RectUtils.containsOffset(rect, cropRectCenter)) {
     //   // can't do
