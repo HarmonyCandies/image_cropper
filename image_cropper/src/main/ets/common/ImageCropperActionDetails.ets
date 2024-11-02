@@ -228,8 +228,11 @@ export class ImageCropperActionDetails {
 
   updateRotateRadians(rotateRadians: number, maxScale: number): void {
     this.rotateRadians = rotateRadians;
-    let scaleDelta = this.scaleToFitCropRect();
+    this.scaleToFitRect(maxScale);
+  }
 
+  scaleToFitRect(maxScale: number) {
+    let scaleDelta = this.scaleToFitCropRect();
     if (scaleDelta > 0) {
       // can't scale image
       // so we should scale the crop rect
@@ -245,14 +248,13 @@ export class ImageCropperActionDetails {
             this.cropRect!.width * scaleDelta,
             this.cropRect!.height * scaleDelta,
           );
-        }
-        else {
+        } else {
           this.updateDelta(geometry.Offset.zero);
         }
       } else {
         this.screenFocalPoint = null;
         this.preTotalScale = this.totalScale;
-        this.totalScale = Math.max(this.totalScale * scaleDelta, this.totalScale);
+        this.totalScale = this.totalScale * scaleDelta;
       }
     }
   }
@@ -332,7 +334,7 @@ export class ImageCropperActionDetails {
     rectVertices: geometry.Offset[],
     rect: geometry.Rect,
   ): number {
-    let scaleDelta= Infinity;
+    let scaleDelta = Infinity;
     let contains = 0;
     // let center: geometry.Offset = rect.center;
     let cropRectCenter = rectVertices[0].add(rectVertices[2]).divide(2);
