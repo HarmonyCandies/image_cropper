@@ -13,5 +13,7 @@
   "repository": "https://github.com/HarmonyCandies/image_cropper",
   "version": "1.0.0",
   "homepage": "https://github.com/HarmonyCandies/image_cropper",
-  "dependencies": {}
+  "dependencies": {
+    "@candies/image_editor": "1.0.0"
+  }
 }

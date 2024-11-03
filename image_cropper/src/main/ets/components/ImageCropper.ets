@@ -10,6 +10,7 @@ import { faceDetector } from '@kit.CoreVisionKit';
 import { Matrix4, Vector4 } from '../model/Matrix4';
 import { RectTween } from '../common/Curve';
 import { FlipOptions, RotateOptions } from '../common/ImageCropperController';
+import * as image_editor from '@candies/image_editor'
 
 enum _MoveType {
   topLeft,
@@ -24,7 +25,8 @@ enum _MoveType {
 
 @Component
 export struct ImageCropper {
-  @Link image: PixelMap;
+  @State pixelMap: PixelMap | null = null;
+  @Link @Watch("onImageChanged") image: image.ImageSource;
   initCropperConfigHandler?: InitCropperConfigHandler;
   private _config: ImageCropperConfig | null = null;
   private imageInfo: image.ImageInfo | null = null;
@@ -51,6 +53,12 @@ export struct ImageCropper {
   private _debounceSaveCurrentEditActionDetails: () => void = debounce(() => {
     this._saveCurrentState();
   }, 400);
+
+  onImageChanged(changedPropertyName: string) {
+    this.initImageInfo().then(() => {
+      this.reset();
+    });
+  }
 
   aboutToAppear() {
     this.initImageInfo().then(() => {
@@ -155,7 +163,10 @@ export struct ImageCropper {
   }
 
   async initImageInfo(): Promise<void> {
-    this.imageInfo = await this.image!.getImageInfo();
+    this.pixelMap = await this.image.createPixelMap({
+      sampleSize: 1,
+    });
+    this.imageInfo = await this.image.getImageInfo();
   }
 
   init(): void {
@@ -196,6 +207,9 @@ export struct ImageCropper {
       controller.undo = this.undo.bind(this);
       controller.getActionDetails = this.geActionDetails.bind(this);
       controller.updateCropAspectRatio = this.updateCropAspectRatio.bind(this);
+      controller.getHistory = this._getHistory.bind(this);
+      controller.getCurrentIndex = this._getCurrentIndex.bind(this);
+      controller.getCroppedImage= this._getCroppedImage.bind(this);
     }
     let length = this._history.length;
     this._history.splice(0, length);
@@ -206,102 +220,107 @@ export struct ImageCropper {
   }
 
   build() {
-    Stack() {
-      if (this._actionDetails != null && this._area != null && this._refreshTag > 0) {
-        Canvas(this.imageContext).onReady(() => {
-          this._imageContextReady = true;
-          let outputSize: geometry.Size = new geometry.Size(this.imageContext.width, this.imageContext.height);
+    if (this.pixelMap != undefined) {
+      Stack() {
+        if (this._actionDetails != null && this._area != null && this._refreshTag > 0) {
+          Canvas(this.imageContext).onReady(() => {
+            this._imageContextReady = true;
+            let outputSize: geometry.Size = new geometry.Size(this.imageContext.width, this.imageContext.height);
+            if (this.imageInfo != null) {
+              this.initImageRect(outputSize,
+                new geometry.Size(this.imageInfo!.size.width, this.imageInfo!.size.height));
+            }
+          })
+            .transform(matrix4.identity()
+              .rotate({
+                y: this._rotationYRadians != 0 ? 1 : 0,
+                x: 0,
+                z: 0,
+                angle: NumberUtils.degrees(this._rotationYRadians),
+              }))
+          Canvas(this.cropLayerContext).onReady(() => {
+            this._cropLayerContextReady = true;
+            let outputSize: geometry.Size = new geometry.Size(this.imageContext.width, this.imageContext.height);
+            if (this.imageInfo != null) {
+              this.initImageRect(outputSize, new geometry.Size(this.imageInfo.size.width, this.imageInfo.size.height));
+            }
+          })
+        } else {
+          Image(this.pixelMap).objectFit(ImageFit.Contain)
+        }
+
+      }
+      .hitTestBehavior(this._isAnimating ? HitTestMode.None : HitTestMode.Default)
+      .gesture(
+        GestureGroup(GestureMode.Exclusive, PinchGesture({}).onActionStart((event: GestureEvent) => {
+          this.handleScaleStart(event, false,);
+        })
+          .onActionUpdate((event: GestureEvent) => {
+            this.handleScaleUpdate(event, false);
+          })
+          ,
+          PanGesture().onActionStart((event: GestureEvent) => {
+            this.handleScaleStart(event, true);
+          })
+            .onActionUpdate((event: GestureEvent) => {
+              this.handleScaleUpdate(event, true);
+            }).onActionEnd((event: GestureEvent) => {
+            if (this._cropRectMoveType != null) {
+              this._cropRectMoveType = null;
+              // move to center
+              let oldScreenCropRect = this._actionDetails!.cropRect!;
+
+              let centerCropRect = getDestinationRect(
+                this._actionDetails!.cropRectLayoutRect!, oldScreenCropRect.size,
+              );
+              this._startCropRectAutoCenterAnimation(oldScreenCropRect, centerCropRect);
+            }
+
+          })
+        )
+
+      )
+      .onAreaChange((oldValue: Area, newValue: Area) => {
+        if (newValue.width == 0 || newValue.height == 0) {
+          return;
+        }
+        // the screen size is changed
+        if (this._area != null && this._area != newValue) {
+          this._updateUIIfNeed(() => {
+            this._recalculateCropRect();
+          });
+          this._saveCurrentState();
+        } else {
+          let outputSize: geometry.Size = new geometry.Size(newValue.width as number, newValue.height as number);
           if (this.imageInfo != null) {
             this.initImageRect(outputSize, new geometry.Size(this.imageInfo!.size.width, this.imageInfo!.size.height));
           }
-        })
-          .transform(matrix4.identity()
-            .rotate({
-              y: this._rotationYRadians != 0 ? 1 : 0,
-              x: 0,
-              z: 0,
-              angle: NumberUtils.degrees(this._rotationYRadians),
-            }))
-        Canvas(this.cropLayerContext).onReady(() => {
-          this._cropLayerContextReady = true;
-          let outputSize: geometry.Size = new geometry.Size(this.imageContext.width, this.imageContext.height);
-          if (this.imageInfo != null) {
-            this.initImageRect(outputSize, new geometry.Size(this.imageInfo.size.width, this.imageInfo.size.height));
-          }
-        })
-      } else {
-        Image(this.image).objectFit(ImageFit.Contain)
-      }
+        }
 
-    }
-    .hitTestBehavior(this._isAnimating ? HitTestMode.None : HitTestMode.Default)
-    .gesture(
-      GestureGroup(GestureMode.Exclusive, PinchGesture({}).onActionStart((event: GestureEvent) => {
-        this.handleScaleStart(event, false,);
+        this._area = newValue;
       })
-        .onActionUpdate((event: GestureEvent) => {
-          this.handleScaleUpdate(event, false);
-        })
-        ,
-        PanGesture().onActionStart((event: GestureEvent) => {
-          this.handleScaleStart(event, true);
-        })
-          .onActionUpdate((event: GestureEvent) => {
-            this.handleScaleUpdate(event, true);
-          }).onActionEnd((event: GestureEvent) => {
-          if (this._cropRectMoveType != null) {
-            this._cropRectMoveType = null;
-            // move to center
-            let oldScreenCropRect = this._actionDetails!.cropRect!;
+      .onTouch((event) => {
+        if (event.type == TouchType.Down) {
+          this._pointerDown = true;
 
-            let centerCropRect = getDestinationRect(
-              this._actionDetails!.cropRectLayoutRect!, oldScreenCropRect.size,
-            );
-            this._startCropRectAutoCenterAnimation(oldScreenCropRect, centerCropRect);
+          if (event.touches.length == 1) {
+            let touch = event.touches[0];
+            this._cropRectMoveType = this.touchOnCropRect(new geometry.Offset(touch.x, touch.y));
           }
 
-        })
-      )
-
-    )
-    .onAreaChange((oldValue: Area, newValue: Area) => {
-      if (newValue.width == 0 || newValue.height == 0) {
-        return;
-      }
-      // the screen size is changed
-      if (this._area != null && this._area != newValue) {
-        this._updateUIIfNeed(() => {
-          this._recalculateCropRect();
-        });
-        this._saveCurrentState();
-      } else {
-        let outputSize: geometry.Size = new geometry.Size(newValue.width as number, newValue.height as number);
-        if (this.imageInfo != null) {
-          this.initImageRect(outputSize, new geometry.Size(this.imageInfo!.size.width, this.imageInfo!.size.height));
-        }
-      }
-
-      this._area = newValue;
-    })
-    .onTouch((event) => {
-      if (event.type == TouchType.Down) {
-        this._pointerDown = true;
-
-        if (event.touches.length == 1) {
-          let touch = event.touches[0];
-          this._cropRectMoveType = this.touchOnCropRect(new geometry.Offset(touch.x, touch.y));
-        }
-
-        this._drawLayer();
-      } else if (event.type == TouchType.Up || event.type == TouchType.Cancel) {
-        if (this._pointerDown) {
-          this._pointerDown = false;
           this._drawLayer();
-          this._saveCurrentState();
+        } else if (event.type == TouchType.Up || event.type == TouchType.Cancel) {
+          if (this._pointerDown) {
+            this._pointerDown = false;
+            this._drawLayer();
+            this._saveCurrentState();
+          }
         }
-      }
-    })
-    .layoutWeight(1)
+      })
+      .layoutWeight(1)
+    } else {
+      Column()
+    }
   }
 
   private handleScaleStart(details: GestureEvent, pan: boolean): void {
@@ -379,7 +398,7 @@ export struct ImageCropper {
     let screenDestinationRect = this._actionDetails?.getFinalDestinationRect();
     if (this._imageContextReady && screenDestinationRect != undefined) {
       this.imageContext.reset();
-      this.imageContext.drawImage(this.image, screenDestinationRect!.left, screenDestinationRect!.top,
+      this.imageContext.drawImage(this.pixelMap, screenDestinationRect!.left, screenDestinationRect!.top,
         screenDestinationRect!.width, screenDestinationRect!.height,);
       if (this._history.length == 0) {
         this._currentIndex = -1;
@@ -589,7 +608,7 @@ export struct ImageCropper {
       }
 
 
-      this.imageContext.drawImage(this.image, screenDestinationRect!.left, screenDestinationRect!.top,
+      this.imageContext.drawImage(this.pixelMap, screenDestinationRect!.left, screenDestinationRect!.top,
         screenDestinationRect!.width, screenDestinationRect!.height,);
     }
   }
@@ -1194,7 +1213,7 @@ export struct ImageCropper {
     )
 
     this._actionDetails!.scaleToFitRect(this._config!.maxScale);
-    return   this._actionDetails!.cropRect!;
+    return this._actionDetails!.cropRect!;
   }
 
   private _onEditActionDetailsIsChanged(): void {
@@ -1203,4 +1222,101 @@ export struct ImageCropper {
       editActionDetailsIsChanged(this._actionDetails);
     }
   }
+
+  private _getHistory() {
+    return this._history;
+  }
+
+  private _getCurrentIndex() {
+    return this._currentIndex;
+  }
+
+  private async _getCroppedImage(): Promise<PixelMap | null> {
+    if (this._actionDetails == null) {
+      return null;
+    }
+    let actionDetails = this._actionDetails;
+    let options: Array<image_editor.EditOption> = [];
+    if (actionDetails.hasRotateDegrees) {
+      options.push(new image_editor.RotateOption(actionDetails.rotateDegrees));
+    }
+
+    if (actionDetails.flipY) {
+      options.push(new image_editor.FlipOption(true, false));
+    }
+
+    if (actionDetails.needCrop) {
+      let cropRect = this._getImageCropRect()!;
+      options.push((new image_editor.ClipOption(
+        cropRect.left, cropRect.top, cropRect.width, cropRect.height,
+      )));
+    }
+
+    return await image_editor.ImageEditor.instance.handleImageWithOptions(this.image, options);
+  }
+
+  _getImageCropRect(): geometry.Rect | null {
+    if (
+      this._actionDetails == null || this.imageInfo == null) {
+      return null;
+    }
+
+    let cropScreen = this._actionDetails!.cropRect;
+    let imageScreenRect = this._actionDetails!.destinationRect;
+
+    if (cropScreen == null || imageScreenRect == null) {
+      return null;
+    }
+
+    let
+      path = this._actionDetails!!.getImagePath();
+
+    let image2DRect = path.getBounds();
+
+    imageScreenRect =
+      geometry.Rect.fromLTRB(image2DRect.left, image2DRect.top, image2DRect.right,
+        image2DRect.bottom,);
+
+
+    let topLeft = new geometry.Offset(-imageScreenRect.topLeft.dx, -imageScreenRect.topLeft.dy);
+    // move to zero
+    cropScreen = cropScreen.shift(topLeft);
+
+    imageScreenRect = imageScreenRect.shift(topLeft);
+
+
+    // rotate Physical rect
+
+    let physicalImageRect = geometry.Rect.fromOffsetSize(geometry.Offset.zero, new geometry.Size(
+      this.imageInfo.size.width, this.imageInfo.size.height,
+    ));
+
+    let
+      physicalimagePath =
+        this._actionDetails!.getImagePath(physicalImageRect
+        );
+
+    let physicalimage2DRect = physicalimagePath.getBounds();
+
+    physicalImageRect =
+      geometry.Rect.fromLTRB(physicalimage2DRect.left, physicalimage2DRect.top, physicalimage2DRect.right,
+        physicalimage2DRect.bottom,);
+
+
+    let
+      ratioX = physicalImageRect.width / imageScreenRect.width;
+    let
+      ratioY = physicalImageRect.height / imageScreenRect.height;
+
+    let
+      cropImageRect = geometry.Rect.fromLTWH(
+        cropScreen.left * ratioX,
+        cropScreen.top * ratioY,
+        cropScreen.width * ratioX,
+        cropScreen.height * ratioY,
+      );
+    return cropImageRect;
+  }
+
+
 }

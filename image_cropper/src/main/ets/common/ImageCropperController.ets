@@ -1,6 +1,10 @@
 import { ChangeNotifier } from "../ChangeNotifier";
 import { ImageCropper } from "../components/ImageCropper";
 import { ImageCropperActionDetails } from "./ImageCropperActionDetails";
+import { AsyncCallback } from "@ohos.base";
+import colorSpaceManager from "@ohos.graphics.colorSpaceManager";
+import rpc from "@ohos.rpc";
+import { image } from '@kit.ImageKit';
 
 export interface FlipOptions {
   animation?: boolean,
@@ -59,28 +63,22 @@ export class ImageCropperController extends ChangeNotifier {
 
   updateCropAspectRatio: (aspectRatio: number | null) => void = (aspectRatio: number | null) => {
   };
-  //   @override
-  //   void updateCropAspectRatio(double? aspectRatio) {
-  //   _state?.updateCropAspectRatio(aspectRatio);
-  // }
-  //
-  // @override
-  // ui.Rect? getCropRect() {
-  //   return _state?.getCropRect();
-  // }
-  //
-  // /// The current editor actions in history which is a copywith [editActionDetails].
-  // @override
-  // int get currentIndex => _state?.currentIndex ?? -1;
-  //
-  // /// Do not update it by yourself
-  // @override
-  // List<EditActionDetails> get history =>
-  // _state?.history ?? <EditActionDetails>[];
-  //
-  // /// Save the current state of the editor.
-  // @override
-  // void saveCurrentState() {
-  //   _state?.saveCurrentState();
-  // }
+  /// Save the current state of the editor.
+  saveCurrentState: () => void = () => {
+  };
+  /// The current editor actions in history which is a copywith [editActionDetails].
+  getHistory: () => Array<ImageCropperActionDetails> = () => {
+    return [];
+  }
+  getCurrentIndex: () => number = () => {
+    return -1;
+  }
+  getCroppedImage: () => Promise<PixelMap | null> = async  () => {
+    return null;
+  }
+
+  get currentIndex(): number {
+    return -1;
+  }
 }
+

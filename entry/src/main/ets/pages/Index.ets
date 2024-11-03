@@ -1,9 +1,12 @@
 import * as image_cropper from "@candies/image_cropper";
 import resourceManager from '@ohos.resourceManager';
 import { image } from '@kit.ImageKit';
-import { matrix4 } from '@kit.ArkUI';
+import { matrix4, promptAction } from '@kit.ArkUI';
 import { vibrator } from '@kit.SensorServiceKit';
 import { NumberUtils } from '@candies/image_cropper/src/main/ets/Utils';
+import { photoAccessHelper } from '@kit.MediaLibraryKit'
+import { fileIo } from '@kit.CoreFileKit';
+import { BusinessError } from '@ohos.base';
 
 @Extend(SymbolGlyph)
 function symbolStyle() {
@@ -18,7 +21,7 @@ interface AspectRatioItem {
 @Entry
 @Component
 struct Index {
-  @State pixelMap: PixelMap | undefined = undefined;
+  @State image: image.ImageSource | undefined = undefined;
   dialogController: CustomDialogController | null = null;
   private controller: image_cropper.ImageCropperController = new image_cropper.ImageCropperController();
   @State currentDegree: number = 0
@@ -34,6 +37,7 @@ struct Index {
     { text: '9*16', value: image_cropper.CropAspectRatios.ratio9_16 },
   ];
   @State _aspectRatio: AspectRatioItem = this._aspectRatios[0];
+  private photoPicker = new photoAccessHelper.PhotoViewPicker();
 
   aboutToAppear() {
     this.init();
@@ -53,30 +57,18 @@ struct Index {
     const context: Context = getContext(this);
     const resourceMgr: resourceManager.ResourceManager = context.resourceManager;
     let rfd = await resourceMgr.getRawFd('gwen_jf.jpg');
-    const imageSource: image.ImageSource = image.createImageSource(rfd);
-
-    let decodingOptions: image.DecodingOptions = {
-      sampleSize: 1,
-    };
-    this.pixelMap = await imageSource.createPixelMap(decodingOptions);
+    this.image = image.createImageSource(rfd);
   }
 
-  async showNewImage(): Promise<void> {
-    if (this.pixelMap != undefined) {
-      this.pixelMap.release();
-    }
-
-    // this.pixelMap = await ImageEditor.instance.handleImageRawfile(this.rfd!, [option]);
-
+  async showNewImage(pixelMap: image.PixelMap, savePath: string): Promise<void> {
     this.dialogController = new CustomDialogController({
       builder: ImageDialog({
-        pixelMap: this.pixelMap,
+        pixelMap: pixelMap,
+        savePath: savePath,
       }),
       autoCancel: true,
       onWillDismiss: (dismissDialogAction: DismissDialogAction) => {
-        if (this.pixelMap != null) {
-          this.pixelMap.release();
-        }
+        pixelMap.release();
       },
       alignment: DialogAlignment.Center,
       offset: { dx: 0, dy: -20 },
@@ -95,12 +87,79 @@ struct Index {
   build() {
     Column() {
       Row() {
+        Row().layoutWeight(1)
+        Column() {
+          SymbolGlyph($r('sys.symbol.cake')).symbolStyle()
+          Text('选择图片').fontSize(12)
+        }.onClick(() => {
+          this.photoPicker.select({
+            isOriginalSupported: true,
+            maxSelectNumber: 1,
+          }).then((value) => {
+            if (value.photoUris.length != 0) {
+              let uri = value.photoUris[0];
+              let file = fileIo.openSync(uri, fileIo.OpenMode.READ_ONLY);
+              console.info('file fd: ' + file.fd);
+              let buffer = new ArrayBuffer(4096);
+              let readLen = fileIo.readSync(file.fd, buffer);
+
+              console.info('readSync data to file succeed and buffer size is:' + readLen);
+              this.image = image.createImageSource(file.fd);
+              this.currentDegree = 0;
+            }
+          });
+        }).margin(5)
+
+        SaveButton(
+          {
+            icon: SaveIconStyle.FULL_FILLED,
+            text: SaveDescription.SAVE_IMAGE,
+            buttonType: ButtonType.Normal,
+          }
+        )
+          .onClick(async (event, result: SaveButtonOnClickResult) => {
+            if (result == SaveButtonOnClickResult.SUCCESS) {
+              try {
+                let pixelMap = await this.controller.getCroppedImage();
+                if (pixelMap != null) {
+                  let context: Context = getContext(this);
+                  let helper = photoAccessHelper.getPhotoAccessHelper(context);
+                  let uri = await helper.createAsset(photoAccessHelper.PhotoType.IMAGE, 'jpeg');
+                  let file = await fileIo.open(uri, fileIo.OpenMode.READ_WRITE | fileIo.OpenMode.CREATE);
+                  let imagePackerApi = image.createImagePacker();
+                  let packOpts: image.PackingOption = { format: 'image/jpeg', quality: 98 };
+
+                  imagePackerApi.packToFile(pixelMap, file.fd, packOpts, (err: BusinessError) => {
+                    if (err) {
+                      console.error(`Failed to pack the image to file.code ${err.code},message is ${err.message}`);
+                    } else {
+                      console.info('Succeeded in packing the image to file.');
+                      imagePackerApi.release((err: BusinessError) => {
+                        if (err) {
+                          console.error(`Failed to release the image source instance.code ${err.code},message is ${err.message}`);
+                        } else {
+                          console.info('Succeeded in releasing the image source instance.');
+                          fileIo.close(file.fd);
+                        }
+                      })
+                      this.showNewImage(pixelMap!, file.path + '.jpeg');
+                    }
+                  })
+                }
+
+              } catch (err) {
+                console.error(`create asset failed with error: ${err.code}, ${err.message}`);
+              }
+            } else {
+              console.error('SaveButtonOnClickResult create asset failed');
+            }
+          })
       }
 
-      if (this.pixelMap != undefined) {
+      if (this.image != undefined) {
         image_cropper.ImageCropper(
           {
-            image: this.pixelMap,
+            image: this.image,
             initCropperConfigHandler: (imageInfo: image.ImageInfo) => {
               return new image_cropper.ImageCropperConfig(
                 {
@@ -114,6 +173,8 @@ struct Index {
             }
           }
         )
+      } else {
+        Column().layoutWeight(1)
       }
       Row() {
         Column() {
@@ -259,7 +320,8 @@ struct Index {
 @Component
 struct ImageDialog {
   pixelMap: PixelMap | null = null;
-  controller?: CustomDialogController
+  controller?: CustomDialogController;
+  savePath: string | null = null;
 
   build() {
     Column() {
@@ -269,6 +331,7 @@ struct ImageDialog {
             this.controller.close()
           }
         }).backgroundColor(0xffffff).fontColor(Color.Black)
+      Text('图片被保存到:' + this.savePath ?? '')
       if (this.pixelMap != null) {
         Image(this.pixelMap).objectFit(ImageFit.Contain)
       }
