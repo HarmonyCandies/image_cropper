@@ -3,7 +3,7 @@ import { ImageCropperActionDetails } from '../common/ImageCropperActionDetails';
 import { CropAspectRatios, ImageCropperConfig, InitCropRectType } from '../common/ImageCropperConfig';
 import { InitCropperConfigHandler } from '../Declare';
 import { geometry } from '../model/Geometry';
-import { debounce, getDestinationRect, NumberUtils, OffsetUtils, RectUtils } from '../Utils';
+import { debounce, EdgeInsetsUtils, getDestinationRect, NumberUtils, OffsetUtils, RectUtils } from '../Utils';
 import { matrix4 } from '@kit.ArkUI';
 import animator, { AnimatorOptions, AnimatorResult } from '@ohos.animator';
 import { faceDetector } from '@kit.CoreVisionKit';
@@ -25,23 +25,23 @@ enum _MoveType {
 
 @Component
 export struct ImageCropper {
-  @State pixelMap: PixelMap | null = null;
   @Link @Watch("onImageChanged") image: image.ImageSource;
-  initCropperConfigHandler?: InitCropperConfigHandler;
-  private _config: ImageCropperConfig | null = null;
-  private imageInfo: image.ImageInfo | null = null;
+  @Link @Watch("onConfigChanged") config?: ImageCropperConfig;
+  @State pixelMap: PixelMap | null = null;
   @State private _actionDetails: ImageCropperActionDetails | null = null;
   @State private _area: Area | null = null;
+  @State private _refreshTag: number = 1;
+  @State private _rotationYRadians: number = 0;
+  private _config: ImageCropperConfig | undefined = undefined;
+  private imageInfo: image.ImageInfo | null = null;
   private _startingOffset: geometry.Offset = geometry.Offset.zero;
   private _detailsScale: number = 1;
   private _startingScale: number = 1;
-  @State private _refreshTag: number = 1;
   private settings: RenderingContextSettings = new RenderingContextSettings(true)
   private imageContext: CanvasRenderingContext2D = new CanvasRenderingContext2D(this.settings)
   private cropLayerContext: CanvasRenderingContext2D = new CanvasRenderingContext2D(this.settings)
   private _imageContextReady: boolean = false;
   private _cropLayerContextReady: boolean = false;
-  @State private _rotationYRadians: number = 0;
   private _pointerDown: boolean = false;
   private _cropRectMoveType: _MoveType | null = null;
   private _cropRectAutoCenterAnimator: AnimatorResult | undefined = undefined;
@@ -58,6 +58,59 @@ export struct ImageCropper {
     this.initImageInfo().then(() => {
       this.reset();
     });
+  }
+
+  onConfigChanged(changedPropertyName: string) {
+    let oldConfig = this._config?.copyWith({});
+    this._config = this.config;
+
+    if (oldConfig != undefined && this.config != undefined) {
+      let controller = this.config.controller;
+
+      if (oldConfig.controller != controller && controller != undefined) {
+        controller.flip = this.flip.bind(this);
+        controller.reset = this.reset.bind(this);
+        controller.rotate = this._rotate.bind(this);
+        controller.canRedo = this.canRedo.bind(this);
+        controller.canUndo = this.canUndo.bind(this);
+        controller.redo = this.redo.bind(this);
+        controller.undo = this.undo.bind(this);
+        controller.getActionDetails = this.geActionDetails.bind(this);
+        controller.updateCropAspectRatio = this.updateCropAspectRatio.bind(this);
+        controller.getHistory = this._getHistory.bind(this);
+        controller.getCurrentIndex = this._getCurrentIndex.bind(this);
+        controller.getCroppedImage = this._getCroppedImage.bind(this);
+      }
+
+      if (this._actionDetails != null && this.config != undefined) {
+        // totalScale
+        if (this._actionDetails!.totalScale > this.config!.maxScale ||
+          !EdgeInsetsUtils.isSame(oldConfig.cropRectPadding,
+            this.config.cropRectPadding
+          )
+        ) {
+          this.reset();
+          return;
+        }
+        // cropAspectRatio
+        if (this._actionDetails.cropAspectRatio != this.config!.cropAspectRatio) {
+          this.updateCropAspectRatio(this.config!.cropAspectRatio);
+        }
+      }
+
+      if (oldConfig.cropLayerPainter != this.config.cropLayerPainter
+        || oldConfig.cornerColor != this.config.cornerColor
+        || oldConfig.cornerSize != this.config.cornerSize
+        || oldConfig.lineColor != this.config.lineColor
+        || oldConfig.lineHeight != this.config.lineHeight
+        || oldConfig.editorMaskColorHandler != this.config.editorMaskColorHandler
+      ) {
+        this._drawLayer();
+      }
+    }
+
+    // hitTestSize, animationDuration, speed, editActionDetailsIsChanged , initialCropAspectRatio
+    // not need to update ui
   }
 
   aboutToAppear() {
@@ -170,8 +223,8 @@ export struct ImageCropper {
   }
 
   init(): void {
-    if (this.initCropperConfigHandler != undefined) {
-      this._config = this.initCropperConfigHandler(this.imageInfo!);
+    if (this.config != undefined) {
+      this._config = this.config;
     } else {
       this._config = new ImageCropperConfig();
     }
@@ -209,7 +262,7 @@ export struct ImageCropper {
       controller.updateCropAspectRatio = this.updateCropAspectRatio.bind(this);
       controller.getHistory = this._getHistory.bind(this);
       controller.getCurrentIndex = this._getCurrentIndex.bind(this);
-      controller.getCroppedImage= this._getCroppedImage.bind(this);
+      controller.getCroppedImage = this._getCroppedImage.bind(this);
     }
     let length = this._history.length;
     this._history.splice(0, length);
@@ -579,7 +632,7 @@ export struct ImageCropper {
     }
 
     this.setState(() => {
-      this._config = null;
+      this._config = undefined;
       this._actionDetails = null;
       this._pointerDown = false;
       this._rotationYRadians = 0;
@@ -682,7 +735,7 @@ export struct ImageCropper {
     }
 
     rect =
-      geometry.Rect.fromCenter(screenCropRect.centerRight, screenCropRect.height - hitTestSize, hitTestSize * 2);
+      geometry.Rect.fromCenter(screenCropRect.centerRight, hitTestSize * 2, screenCropRect.height - hitTestSize);
     if (RectUtils.containsOffset(rect, offset)) {
       return _MoveType.right;
     }
@@ -704,7 +757,7 @@ export struct ImageCropper {
     }
 
     rect =
-      geometry.Rect.fromCenter(screenCropRect.centerLeft, screenCropRect.height - hitTestSize, hitTestSize * 2);
+      geometry.Rect.fromCenter(screenCropRect.centerLeft, hitTestSize * 2, screenCropRect.height - hitTestSize);
     if (RectUtils.containsOffset(rect, offset)) {
       return _MoveType.left;
     }
@@ -1317,6 +1370,4 @@ export struct ImageCropper {
       );
     return cropImageRect;
   }
-
-
 }

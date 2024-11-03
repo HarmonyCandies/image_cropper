@@ -1,12 +1,13 @@
 import * as image_cropper from "@candies/image_cropper";
 import resourceManager from '@ohos.resourceManager';
 import { image } from '@kit.ImageKit';
-import { matrix4, promptAction } from '@kit.ArkUI';
+import { matrix4, SymbolGlyphModifier } from '@kit.ArkUI';
 import { vibrator } from '@kit.SensorServiceKit';
 import { NumberUtils } from '@candies/image_cropper/src/main/ets/Utils';
 import { photoAccessHelper } from '@kit.MediaLibraryKit'
 import { fileIo } from '@kit.CoreFileKit';
 import { BusinessError } from '@ohos.base';
+import { CircleCornerImageCropperLayerPainter, CircleImageCropperLayerPainter } from '../painter';
 
 @Extend(SymbolGlyph)
 function symbolStyle() {
@@ -28,8 +29,8 @@ struct Index {
   @State canRedo: boolean = false;
   @State canUndo: boolean = false;
   private _aspectRatios: Array<AspectRatioItem> = [
-    { text: 'custom', value: image_cropper.CropAspectRatios.custom },
-    { text: 'original', value: image_cropper.CropAspectRatios.original },
+    { text: '自由', value: image_cropper.CropAspectRatios.custom },
+    { text: '原始', value: image_cropper.CropAspectRatios.original },
     { text: '1*1', value: image_cropper.CropAspectRatios.ratio1_1 },
     { text: '4*3', value: image_cropper.CropAspectRatios.ratio4_3 },
     { text: '3*4', value: image_cropper.CropAspectRatios.ratio3_4 },
@@ -38,6 +39,30 @@ struct Index {
   ];
   @State _aspectRatio: AspectRatioItem = this._aspectRatios[0];
   private photoPicker = new photoAccessHelper.PhotoViewPicker();
+  @State _config: image_cropper.ImageCropperConfig = new image_cropper.ImageCropperConfig(
+    {
+      maxScale: 8,
+      cropRectPadding: image_cropper.geometry.EdgeInsets.all(20),
+      controller: this.controller,
+      initCropRectType: image_cropper.InitCropRectType.imageRect,
+      cropAspectRatio: this._aspectRatio.value,
+    }
+  );
+  cropLayerPainters: Array<CropPainter> = [
+    {
+      painter: new image_cropper.ImageCropperLayerPainter(),
+      value: '默认',
+    },
+    {
+      painter: new CircleCornerImageCropperLayerPainter(),
+      value: '圆形四角',
+    },
+    {
+      painter: new CircleImageCropperLayerPainter(),
+      value: '圆形裁剪',
+    }
+  ];
+  @State private cropLayerPainterIndex: number = 0;
 
   aboutToAppear() {
     this.init();
@@ -77,8 +102,8 @@ struct Index {
       width: 300,
       // height: 500,
       borderWidth: 1,
-      borderStyle: BorderStyle.Dashed, //使用borderStyle属性，需要和borderWidth属性一起使用
-      borderColor: Color.Blue, //使用borderColor属性，需要和borderWidth属性一起使用
+      borderStyle: BorderStyle.Dashed, 
+      borderColor: Color.Blue, 
       backgroundColor: Color.White,
     });
     this.dialogController.open();
@@ -160,26 +185,38 @@ struct Index {
         image_cropper.ImageCropper(
           {
             image: this.image,
-            initCropperConfigHandler: (imageInfo: image.ImageInfo) => {
-              return new image_cropper.ImageCropperConfig(
-                {
-                  maxScale: 8,
-                  cropRectPadding: image_cropper.geometry.EdgeInsets.all(20),
-                  controller: this.controller,
-                  initCropRectType: image_cropper.InitCropRectType.imageRect,
-                  cropAspectRatio: this._aspectRatio.value,
-                }
-              );
-            }
+            config: this._config,
           }
         )
       } else {
         Column().layoutWeight(1)
       }
       Row() {
+        Select(this.cropLayerPainters)
+          .selected(this.cropLayerPainterIndex)
+          .value('裁剪框(' + this.cropLayerPainters[this.cropLayerPainterIndex].value + ')')
+          .font({ size: 12, weight: 400 })
+          .fontColor('rgb(103, 80, 164)')
+          .selectedOptionFont({ size: 12, weight: 400 })
+          .optionFont({ size: 12, weight: 400 })// s.space(this.space)
+            //.arrowPosition(this.arrowPosition)
+          .menuAlign(MenuAlignType.START, { dx: 0, dy: 0 })
+          .optionWidth(200)
+          .optionHeight(300)
+          .onSelect((index: number, text?: string | undefined) => {
+            if(this.cropLayerPainterIndex!=index){
+              this.cropLayerPainterIndex = index;
+              this._config = this._config.copyWith({
+                cropLayerPainter: this.cropLayerPainters[this.cropLayerPainterIndex].painter,
+                cropAspectRatio: index == 2 ? image_cropper.CropAspectRatios.ratio1_1 : this._config.cropAspectRatio,
+              })
+            }
+          })
+          .margin(5)
+
         Column() {
           SymbolGlyph($r('sys.symbol.undo')).symbolStyle().fontColor([this.canUndo ? 'rgb(103, 80, 164)' : Color.Gray])
-          Text('Undo').fontColor(this.canUndo ? Color.Black : Color.Gray).fontSize(12)
+          Text('撤销').fontColor(this.canUndo ? Color.Black : Color.Gray).fontSize(12)
         }.onClick(() => {
           this._onUndoOrRedo(() => {
             this.controller.undo();
@@ -188,7 +225,7 @@ struct Index {
 
         Column() {
           SymbolGlyph($r('sys.symbol.redo')).symbolStyle().fontColor([this.canRedo ? 'rgb(103, 80, 164)' : Color.Gray])
-          Text('Redo').fontColor(this.canRedo ? Color.Black : Color.Gray).fontSize(12)
+          Text('重做').fontColor(this.canRedo ? Color.Black : Color.Gray).fontSize(12)
         }.onClick(() => {
           this._onUndoOrRedo(() => {
             this.controller.redo();
@@ -198,7 +235,7 @@ struct Index {
         Row().layoutWeight(1)
         Column() {
           SymbolGlyph($r('sys.symbol.car')).symbolStyle()
-          Text('Reset').fontSize(12)
+          Text('重置').fontSize(12)
         }.onClick(() => {
           this.currentDegree = 0;
           this._aspectRatio = this._aspectRatios[0];
@@ -209,7 +246,7 @@ struct Index {
       Row() {
         Column() {
           SymbolGlyph($r('sys.symbol.horizontal_flip')).symbolStyle()
-          Text('Flip').fontSize(12)
+          Text('镜像').fontSize(12)
         }.onClick(() => {
           this.controller.flip(
             { animation: true }
@@ -247,7 +284,7 @@ struct Index {
           SymbolGlyph($r('sys.symbol.rotate_left'))
             .symbolStyle()
             .transform(matrix4.identity().rotate({ y: 1, angle: 180 }))
-          Text('Rotate').fontSize(12)
+          Text('旋转').fontSize(12)
         }.onClick(() => {
           this.controller.rotate(
             {
@@ -312,6 +349,10 @@ struct Index {
         }
       }
     }
+
+    // if (this.cropLayerPainters[this.cropLayerPainterIndex].painter != this._config.cropLayerPainter) {
+    //   this.cropLayerPainterIndex = this.cropLayerPainters.findIndex((x) => x.painter == this._config.cropLayerPainter);
+    // }
   }
 }
 
@@ -340,4 +381,8 @@ struct ImageDialog {
     (10
     )
   }
+}
+
+interface CropPainter extends SelectOption {
+  painter: image_cropper.ImageCropperLayerPainter;
 }

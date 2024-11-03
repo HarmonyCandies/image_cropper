@@ -42,15 +42,12 @@ export interface ImageCropperConfigOptions {
   editorMaskColorHandler?: EditorMaskColorHandler;
   hitTestSize?: number;
   animationDuration?: number;
-  tickerDuration?: number;
   cropAspectRatio?: number | null;
   initialCropAspectRatio?: number | null;
   initCropRectType?: InitCropRectType;
   cropLayerPainter?: ImageCropperLayerPainter;
   speed?: number;
-  hitTestBehavior?: HitTestMode;
   editActionDetailsIsChanged?: EditActionDetailsIsChanged;
-  reverseMousePointerScrollDirection?: boolean;
   controller?: ImageCropperController;
 }
 
@@ -64,15 +61,12 @@ export class ImageCropperConfig {
   editorMaskColorHandler: EditorMaskColorHandler;
   hitTestSize: number;
   animationDuration: number;
-  tickerDuration: number;
   cropAspectRatio: number | null;
   initialCropAspectRatio: number | null;
   initCropRectType: InitCropRectType;
   cropLayerPainter: ImageCropperLayerPainter;
   speed: number;
-  hitTestBehavior: HitTestMode;
   editActionDetailsIsChanged?: EditActionDetailsIsChanged;
-  reverseMousePointerScrollDirection: boolean;
   controller?: ImageCropperController;
 
   constructor(options: ImageCropperConfigOptions = {}) {
@@ -89,15 +83,12 @@ export class ImageCropperConfig {
     this.editorMaskColorHandler = options.editorMaskColorHandler ?? defaultEditorMaskColorHandler;
     this.hitTestSize = options.hitTestSize ?? 20.0;
     this.animationDuration = options.animationDuration ?? 200;
-    this.tickerDuration = options.tickerDuration ?? 400;
     this.cropAspectRatio = options.cropAspectRatio ?? CropAspectRatios.custom;
     this.initialCropAspectRatio = options.initialCropAspectRatio ?? CropAspectRatios.custom;
     this.initCropRectType = options.initCropRectType ?? InitCropRectType.imageRect;
     this.cropLayerPainter = options.cropLayerPainter ?? new ImageCropperLayerPainter();
     this.speed = options.speed ?? 1.0;
-    this.hitTestBehavior = options.hitTestBehavior ?? HitTestMode.Block;
     this.editActionDetailsIsChanged = options.editActionDetailsIsChanged;
-    this.reverseMousePointerScrollDirection = options.reverseMousePointerScrollDirection ?? false;
     this.controller = options.controller;
 
     if (this.lineHeight <= 0.0) {
@@ -112,5 +103,26 @@ export class ImageCropperConfig {
     if (this.speed <= 0.0) {
       throw new Error("speed must be greater than 0");
     }
+  }
+
+  copyWith(option: ImageCropperConfigOptions): ImageCropperConfig {
+    return new ImageCropperConfig({
+      maxScale: option.maxScale ?? this.maxScale,
+      cropRectPadding: option.cropRectPadding ?? this.cropRectPadding,
+      cornerSize: option.cornerSize ?? this.cornerSize,
+      cornerColor: option.cornerColor ?? this.cornerColor,
+      lineColor: option.lineColor ?? this.lineColor,
+      lineHeight: option.lineHeight ?? this.lineHeight,
+      editorMaskColorHandler: option.editorMaskColorHandler ?? this.editorMaskColorHandler,
+      hitTestSize: option.hitTestSize ?? this.hitTestSize,
+      animationDuration: option.animationDuration ?? this.animationDuration,
+      cropAspectRatio: option.cropAspectRatio ?? this.cropAspectRatio,
+      initialCropAspectRatio: option.initialCropAspectRatio ?? this.initialCropAspectRatio,
+      initCropRectType: option.initCropRectType ?? this.initCropRectType,
+      cropLayerPainter: option.cropLayerPainter ?? this.cropLayerPainter,
+      speed: option.speed ?? this.speed,
+      editActionDetailsIsChanged: option.editActionDetailsIsChanged ?? this.editActionDetailsIsChanged,
+      controller: option.controller ?? this.controller,
+    });
   }
 }

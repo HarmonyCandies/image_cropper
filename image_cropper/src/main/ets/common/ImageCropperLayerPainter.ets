@@ -8,7 +8,7 @@ export class ImageCropperLayerPainter {
   /// Paint the entire crop layer, including mask, lines, and corners
   /// The rect may be bigger than size when we rotate crop rect.
   /// Adjust the rect to ensure the mask covers the whole area after rotation
-  paint(
+  public  paint(
     config: ImageCropperLayerPainterConfig
   ): void {
 
@@ -23,7 +23,7 @@ export class ImageCropperLayerPainter {
   }
 
   /// Draw corners of the crop area
-  private paintCorners(config: ImageCropperLayerPainterConfig): void {
+  protected paintCorners(config: ImageCropperLayerPainterConfig): void {
     const cropRect = config.cropRect;
     const cornerSize = config.cornerSize;
     const cornerWidth = cornerSize.width;
@@ -80,7 +80,7 @@ export class ImageCropperLayerPainter {
   }
 
   /// Draw the mask over the crop area
-  private paintMask(config: ImageCropperLayerPainterConfig): void {
+  protected paintMask(config: ImageCropperLayerPainterConfig): void {
     const cropRect = config.cropRect;
     const maskColor = config.maskColor;
     const canvas = config.canvas;
@@ -101,7 +101,7 @@ export class ImageCropperLayerPainter {
   }
 
   /// Draw grid lines inside the crop area
-  private paintLines(config: ImageCropperLayerPainterConfig): void {
+  protected paintLines(config: ImageCropperLayerPainterConfig): void {
     const lineColor = config.lineColor;
     const lineHeight = config.lineHeight;
     const cropRect = config.cropRect;
@@ -146,8 +146,6 @@ export class ImageCropperLayerPainter {
 
     }
     canvas.restore();
-
-
   }
 }
 
