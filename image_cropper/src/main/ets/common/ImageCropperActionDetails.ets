@@ -3,8 +3,10 @@ import { EdgeInsetsUtils, NumberUtils, OffsetUtils, RectUtils } from '../Utils';
 import { matrix4 } from '@kit.ArkUI';
 import { drawing } from '@kit.ArkGraphics2D';
 import { Matrix4, Vector4 } from '../model/Matrix4';
+import { ImageCropperConfig } from './ImageCropperConfig';
 
 export class ImageCropperActionDetails {
+  config: ImageCropperConfig | null = null;
   private _layoutRect?: geometry.Rect;
   private _destinationRect?: geometry.Rect;
   private _rawDestinationRect?: geometry.Rect;
@@ -624,7 +626,7 @@ export class ImageCropperActionDetails {
     copy.cropAspectRatio = cropAspectRatio !== undefined ? cropAspectRatio : this.cropAspectRatio;
     copy.rotateRadians = rotateRadians !== undefined ? rotateRadians : this.rotateRadians;
     copy.rotationYRadians = rotationYRadians !== undefined ? rotationYRadians : this.rotationYRadians;
-
+    copy.config = this.config;
     return copy;
   }
 

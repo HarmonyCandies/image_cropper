@@ -105,24 +105,24 @@ export class ImageCropperConfig {
     }
   }
 
-  copyWith(option: ImageCropperConfigOptions): ImageCropperConfig {
+  copyWith(option?: ImageCropperConfigOptions): ImageCropperConfig {
     return new ImageCropperConfig({
-      maxScale: option.maxScale ?? this.maxScale,
-      cropRectPadding: option.cropRectPadding ?? this.cropRectPadding,
-      cornerSize: option.cornerSize ?? this.cornerSize,
-      cornerColor: option.cornerColor ?? this.cornerColor,
-      lineColor: option.lineColor ?? this.lineColor,
-      lineHeight: option.lineHeight ?? this.lineHeight,
-      editorMaskColorHandler: option.editorMaskColorHandler ?? this.editorMaskColorHandler,
-      hitTestSize: option.hitTestSize ?? this.hitTestSize,
-      animationDuration: option.animationDuration ?? this.animationDuration,
-      cropAspectRatio: option.cropAspectRatio ?? this.cropAspectRatio,
-      initialCropAspectRatio: option.initialCropAspectRatio ?? this.initialCropAspectRatio,
-      initCropRectType: option.initCropRectType ?? this.initCropRectType,
-      cropLayerPainter: option.cropLayerPainter ?? this.cropLayerPainter,
-      speed: option.speed ?? this.speed,
-      editActionDetailsIsChanged: option.editActionDetailsIsChanged ?? this.editActionDetailsIsChanged,
-      controller: option.controller ?? this.controller,
+      maxScale: option?.maxScale ?? this.maxScale,
+      cropRectPadding: option?.cropRectPadding ?? this.cropRectPadding,
+      cornerSize: option?.cornerSize ?? this.cornerSize,
+      cornerColor: option?.cornerColor ?? this.cornerColor,
+      lineColor: option?.lineColor ?? this.lineColor,
+      lineHeight: option?.lineHeight ?? this.lineHeight,
+      editorMaskColorHandler: option?.editorMaskColorHandler ?? this.editorMaskColorHandler,
+      hitTestSize: option?.hitTestSize ?? this.hitTestSize,
+      animationDuration: option?.animationDuration ?? this.animationDuration,
+      cropAspectRatio: option?.cropAspectRatio ?? this.cropAspectRatio,
+      initialCropAspectRatio: option?.initialCropAspectRatio ?? this.initialCropAspectRatio,
+      initCropRectType: option?.initCropRectType ?? this.initCropRectType,
+      cropLayerPainter: option?.cropLayerPainter ?? this.cropLayerPainter,
+      speed: option?.speed ?? this.speed,
+      editActionDetailsIsChanged: option?.editActionDetailsIsChanged ?? this.editActionDetailsIsChanged,
+      controller: option?.controller ?? this.controller,
     });
   }
 }

@@ -32,7 +32,7 @@ export struct ImageCropper {
   @State private _area: Area | null = null;
   @State private _refreshTag: number = 1;
   @State private _rotationYRadians: number = 0;
-  private _config: ImageCropperConfig | undefined = undefined;
+  private _config: ImageCropperConfig | null = null;
   private imageInfo: image.ImageInfo | null = null;
   private _startingOffset: geometry.Offset = geometry.Offset.zero;
   private _detailsScale: number = 1;
@@ -61,56 +61,49 @@ export struct ImageCropper {
   }
 
   onConfigChanged(changedPropertyName: string) {
-    let oldConfig = this._config?.copyWith({});
-    this._config = this.config;
-
-    if (oldConfig != undefined && this.config != undefined) {
-      let controller = this.config.controller;
-
-      if (oldConfig.controller != controller && controller != undefined) {
-        controller.flip = this.flip.bind(this);
-        controller.reset = this.reset.bind(this);
-        controller.rotate = this._rotate.bind(this);
-        controller.canRedo = this.canRedo.bind(this);
-        controller.canUndo = this.canUndo.bind(this);
-        controller.redo = this.redo.bind(this);
-        controller.undo = this.undo.bind(this);
-        controller.getActionDetails = this.geActionDetails.bind(this);
-        controller.updateCropAspectRatio = this.updateCropAspectRatio.bind(this);
-        controller.getHistory = this._getHistory.bind(this);
-        controller.getCurrentIndex = this._getCurrentIndex.bind(this);
-        controller.getCroppedImage = this._getCroppedImage.bind(this);
-      }
-
-      if (this._actionDetails != null && this.config != undefined) {
-        // totalScale
-        if (this._actionDetails!.totalScale > this.config!.maxScale ||
-          !EdgeInsetsUtils.isSame(oldConfig.cropRectPadding,
-            this.config.cropRectPadding
-          )
-        ) {
-          this.reset();
-          return;
-        }
-        // cropAspectRatio
-        if (this._actionDetails.cropAspectRatio != this.config!.cropAspectRatio) {
-          this.updateCropAspectRatio(this.config!.cropAspectRatio);
-        }
-      }
-
-      if (oldConfig.cropLayerPainter != this.config.cropLayerPainter
-        || oldConfig.cornerColor != this.config.cornerColor
-        || oldConfig.cornerSize != this.config.cornerSize
-        || oldConfig.lineColor != this.config.lineColor
-        || oldConfig.lineHeight != this.config.lineHeight
-        || oldConfig.editorMaskColorHandler != this.config.editorMaskColorHandler
-      ) {
-        this._drawLayer();
-      }
+    if (this.config == undefined) {
+      this.reset();
+      return;
     }
+    let oldConfig = this._config!.copyWith();
+    let config = this.config!;
 
-    // hitTestSize, animationDuration, speed, editActionDetailsIsChanged , initialCropAspectRatio
-    // not need to update ui
+    let controller = config.controller;
+    if (oldConfig?.controller != controller && controller != undefined) {
+      controller.flip = this.flip.bind(this);
+      controller.reset = this.reset.bind(this);
+      controller.rotate = this._rotate.bind(this);
+      controller.canRedo = this.canRedo.bind(this);
+      controller.canUndo = this.canUndo.bind(this);
+      controller.redo = this.redo.bind(this);
+      controller.undo = this.undo.bind(this);
+      controller.getActionDetails = this.geActionDetails.bind(this);
+      controller.updateCropAspectRatio = this.updateCropAspectRatio.bind(this);
+      controller.getHistory = this._getHistory.bind(this);
+      controller.getCurrentIndex = this._getCurrentIndex.bind(this);
+      controller.getCroppedImage = this._getCroppedImage.bind(this);
+    }
+    this._updateUIIfNeed(() => {
+      this._config = config;
+      let actionDetails = this._actionDetails!;
+
+      if (oldConfig.cropAspectRatio != config.cropAspectRatio) {
+        this.updateCropAspectRatio(config.cropAspectRatio);
+      }
+      if (actionDetails.totalScale > config.maxScale) {
+        actionDetails.totalScale = config.maxScale;
+        actionDetails.getFinalDestinationRect();
+        this._recalculateCropRect();
+      }
+
+      if (!EdgeInsetsUtils.isSame(oldConfig.cropRectPadding,
+        config.cropRectPadding
+      )) {
+        this._recalculateCropRect();
+      }
+    });
+
+    this._saveCurrentState();
   }
 
   aboutToAppear() {
@@ -263,6 +256,7 @@ export struct ImageCropper {
       controller.getHistory = this._getHistory.bind(this);
       controller.getCurrentIndex = this._getCurrentIndex.bind(this);
       controller.getCroppedImage = this._getCroppedImage.bind(this);
+      controller.getCurrentConfig = this._getCurrentConfig.bind(this);
     }
     let length = this._history.length;
     this._history.splice(0, length);
@@ -632,7 +626,7 @@ export struct ImageCropper {
     }
 
     this.setState(() => {
-      this._config = undefined;
+      this._config = null;
       this._actionDetails = null;
       this._pointerDown = false;
       this._rotationYRadians = 0;
@@ -1043,6 +1037,8 @@ export struct ImageCropper {
     let oldCropRect = this._actionDetails!.cropRect;
     let oldPointerDown = this._pointerDown;
     let oldCopRectRotateRadians = this._cropRectRotateRadians;
+
+    let oldConfig = this._config;
     fn();
 
     if (!NumberUtils.equalToNullable(oldTotalScale, this._actionDetails?.totalScale) ||
@@ -1060,7 +1056,10 @@ export struct ImageCropper {
     if (
       !RectUtils.isSameNullable(oldCropRect, this._actionDetails?.cropRect)
         || oldPointerDown != this._pointerDown ||
-        !NumberUtils.equalToNullable(oldCopRectRotateRadians, this._cropRectRotateRadians)
+        !NumberUtils.equalToNullable(oldCopRectRotateRadians, this._cropRectRotateRadians
+        )
+        ||
+        oldConfig != this._config
     ) {
       this._drawLayer();
     }
@@ -1166,7 +1165,11 @@ export struct ImageCropper {
     if (this.canRedo()) {
       this._updateUIIfNeed(() => {
         this._currentIndex = this._currentIndex + 1;
-        this._actionDetails = this._history[this._currentIndex].copyWith();
+        let ad = this._history[this._currentIndex];
+        if (ad.config != null) {
+          this._config = ad.config;
+        }
+        this._actionDetails = ad.copyWith();
         this._config?.controller?.notifyListeners();
         this._onEditActionDetailsIsChanged();
       });
@@ -1181,7 +1184,11 @@ export struct ImageCropper {
     if (this.canUndo()) {
       this._updateUIIfNeed(() => {
         this._currentIndex = this._currentIndex - 1;
-        this._actionDetails = this._history[this._currentIndex].copyWith();
+        let ad = this._history[this._currentIndex];
+        if (ad.config != null) {
+          this._config = ad.config;
+        }
+        this._actionDetails = ad.copyWith();
         this._config?.controller?.notifyListeners();
         this._onEditActionDetailsIsChanged();
       });
@@ -1213,9 +1220,9 @@ export struct ImageCropper {
       let end = this._history.length;
       this._history.splice(start, end - start);
     }
-
-    this._history.push(this._actionDetails!.copyWith());
-
+    let ad = this._actionDetails!.copyWith();
+    ad.config = this._config;
+    this._history.push(ad);
     this._currentIndex = this._history.length - 1;
     this._config?.controller?.notifyListeners();
   }
@@ -1369,5 +1376,9 @@ export struct ImageCropper {
         cropScreen.height * ratioY,
       );
     return cropImageRect;
+  }
+
+  private _getCurrentConfig() {
+    return this._config;
   }
 }

@@ -5,6 +5,7 @@ import { AsyncCallback } from "@ohos.base";
 import colorSpaceManager from "@ohos.graphics.colorSpaceManager";
 import rpc from "@ohos.rpc";
 import { image } from '@kit.ImageKit';
+import { ImageCropperConfig } from "./ImageCropperConfig";
 
 export interface FlipOptions {
   animation?: boolean,
@@ -73,12 +74,11 @@ export class ImageCropperController extends ChangeNotifier {
   getCurrentIndex: () => number = () => {
     return -1;
   }
-  getCroppedImage: () => Promise<PixelMap | null> = async  () => {
+  getCroppedImage: () => Promise<PixelMap | null> = async () => {
     return null;
   }
-
-  get currentIndex(): number {
-    return -1;
+  getCurrentConfig: () => ImageCropperConfig | null = () => {
+    return null;
   }
 }
 

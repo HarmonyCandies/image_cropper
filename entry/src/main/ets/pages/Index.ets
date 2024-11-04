@@ -1,13 +1,14 @@
 import * as image_cropper from "@candies/image_cropper";
 import resourceManager from '@ohos.resourceManager';
 import { image } from '@kit.ImageKit';
-import { matrix4, SymbolGlyphModifier } from '@kit.ArkUI';
+import { matrix4, promptAction, SymbolGlyphModifier } from '@kit.ArkUI';
 import { vibrator } from '@kit.SensorServiceKit';
 import { NumberUtils } from '@candies/image_cropper/src/main/ets/Utils';
 import { photoAccessHelper } from '@kit.MediaLibraryKit'
 import { fileIo } from '@kit.CoreFileKit';
 import { BusinessError } from '@ohos.base';
 import { CircleCornerImageCropperLayerPainter, CircleImageCropperLayerPainter } from '../painter';
+import { CropAspectRatios } from '@candies/image_cropper';
 
 @Extend(SymbolGlyph)
 function symbolStyle() {
@@ -39,15 +40,6 @@ struct Index {
   ];
   @State _aspectRatio: AspectRatioItem = this._aspectRatios[0];
   private photoPicker = new photoAccessHelper.PhotoViewPicker();
-  @State _config: image_cropper.ImageCropperConfig = new image_cropper.ImageCropperConfig(
-    {
-      maxScale: 8,
-      cropRectPadding: image_cropper.geometry.EdgeInsets.all(20),
-      controller: this.controller,
-      initCropRectType: image_cropper.InitCropRectType.imageRect,
-      cropAspectRatio: this._aspectRatio.value,
-    }
-  );
   cropLayerPainters: Array<CropPainter> = [
     {
       painter: new image_cropper.ImageCropperLayerPainter(),
@@ -63,6 +55,16 @@ struct Index {
     }
   ];
   @State private cropLayerPainterIndex: number = 0;
+  @State _config: image_cropper.ImageCropperConfig = new image_cropper.ImageCropperConfig(
+    {
+      maxScale: 8,
+      cropRectPadding: image_cropper.geometry.EdgeInsets.all(20),
+      controller: this.controller,
+      initCropRectType: image_cropper.InitCropRectType.imageRect,
+      cropAspectRatio: this._aspectRatio.value,
+      cropLayerPainter: this.cropLayerPainters[this.cropLayerPainterIndex].painter,
+    }
+  );
 
   aboutToAppear() {
     this.init();
@@ -102,8 +104,8 @@ struct Index {
       width: 300,
       // height: 500,
       borderWidth: 1,
-      borderStyle: BorderStyle.Dashed, 
-      borderColor: Color.Blue, 
+      borderStyle: BorderStyle.Dashed,
+      borderColor: Color.Blue,
       backgroundColor: Color.White,
     });
     this.dialogController.open();
@@ -204,11 +206,15 @@ struct Index {
           .optionWidth(200)
           .optionHeight(300)
           .onSelect((index: number, text?: string | undefined) => {
-            if(this.cropLayerPainterIndex!=index){
+            if (this.cropLayerPainterIndex != index) {
               this.cropLayerPainterIndex = index;
+              if (index == 2) {
+                this._aspectRatio = this._aspectRatios[2];
+              }
               this._config = this._config.copyWith({
                 cropLayerPainter: this.cropLayerPainters[this.cropLayerPainterIndex].painter,
-                cropAspectRatio: index == 2 ? image_cropper.CropAspectRatios.ratio1_1 : this._config.cropAspectRatio,
+                cropAspectRatio: this._aspectRatio.value,
+                maxScale: 4,
               })
             }
           })
@@ -239,6 +245,7 @@ struct Index {
         }.onClick(() => {
           this.currentDegree = 0;
           this._aspectRatio = this._aspectRatios[0];
+          this.cropLayerPainterIndex = 0;
           this.controller.reset();
         }).margin(5)
       }.margin(5)
@@ -307,6 +314,10 @@ struct Index {
               .fontColor(Color.White)
               .backgroundColor(this._aspectRatio.value == item.value ? 'rgb(103, 80, 164)' : Color.Gray)
           }.onClick(() => {
+            if (this.cropLayerPainterIndex == 2 && item.value != CropAspectRatios.ratio1_1) {
+              promptAction.showToast({ message: '圆形裁剪，只能设置 1*1 的长宽比例！', alignment: Alignment.Center, });
+              return;
+            }
             this._aspectRatio = item;
             this.controller.updateCropAspectRatio(item.value);
           })
@@ -349,10 +360,13 @@ struct Index {
         }
       }
     }
-
-    // if (this.cropLayerPainters[this.cropLayerPainterIndex].painter != this._config.cropLayerPainter) {
-    //   this.cropLayerPainterIndex = this.cropLayerPainters.findIndex((x) => x.painter == this._config.cropLayerPainter);
-    // }
+    let cropLayerPainter = this.controller.getCurrentConfig()?.cropLayerPainter;
+    if (this.cropLayerPainters[this.cropLayerPainterIndex].painter != cropLayerPainter) {
+      let index = this.cropLayerPainters.findIndex((x) => x.painter == cropLayerPainter);
+      if (index >= 0) {
+        this.cropLayerPainterIndex = index;
+      }
+    }
   }
 }
 
