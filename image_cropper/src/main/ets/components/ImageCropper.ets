@@ -53,6 +53,12 @@ export struct ImageCropper {
   private _debounceSaveCurrentEditActionDetails: () => void = debounce(() => {
     this._saveCurrentState();
   }, 400);
+  private _theme: Theme | null = null;
+
+  onWillApplyTheme(theme: Theme) {
+    this._theme = theme;
+    this._drawLayer();
+  }
 
   onImageChanged(changedPropertyName: string) {
     this.initImageInfo().then(() => {
@@ -99,6 +105,7 @@ export struct ImageCropper {
       if (!EdgeInsetsUtils.isSame(oldConfig.cropRectPadding,
         config.cropRectPadding
       )) {
+        actionDetails.cropRectPadding = config.cropRectPadding;
         this._recalculateCropRect();
       }
     });
@@ -316,7 +323,10 @@ export struct ImageCropper {
               this._cropRectMoveType = null;
               // move to center
               let oldScreenCropRect = this._actionDetails!.cropRect!;
-
+              // not move
+              if (OffsetUtils.isSame(oldScreenCropRect.center, this._actionDetails!.cropRectLayoutRectCenter)) {
+                return;
+              }
               let centerCropRect = getDestinationRect(
                 this._actionDetails!.cropRectLayoutRect!, oldScreenCropRect.size,
               );
@@ -474,7 +484,7 @@ export struct ImageCropper {
     if (padding != null) {
       layoutRect = padding.deflateRect(layoutRect);
     }
-    if (this._actionDetails!.cropRect == null) {
+    if (this._actionDetails!.cropRect == undefined) {
 
       const destinationRect = getDestinationRect(
         layoutRect,
@@ -825,6 +835,7 @@ export struct ImageCropper {
       new geometry.Offset(Math.min(result.right, layerDestinationRect.right),
         Math.min(result.bottom, layerDestinationRect.bottom)));
 
+
     result = this._handleAspectRatio(
       gWidth,
       this._cropRectMoveType!,
@@ -845,7 +856,7 @@ export struct ImageCropper {
     } else {
       let finalResult = this._doWithMaxScale(result);
 
-      if (finalResult != null && result != this._actionDetails!.cropRect) {
+      if (finalResult != null && !RectUtils.isSameNullable(finalResult, this._actionDetails!.cropRect)) {
         this._actionDetails!.cropRect = finalResult;
       }
     }

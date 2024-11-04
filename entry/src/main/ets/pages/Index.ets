@@ -114,7 +114,6 @@ struct Index {
   build() {
     Column() {
       Row() {
-        Row().layoutWeight(1)
         Column() {
           SymbolGlyph($r('sys.symbol.cake')).symbolStyle()
           Text('选择图片').fontSize(12)
@@ -181,7 +180,8 @@ struct Index {
               console.error('SaveButtonOnClickResult create asset failed');
             }
           })
-      }
+        Row().margin(5)
+      }.justifyContent(FlexAlign.End).width('100%')
 
       if (this.image != undefined) {
         image_cropper.ImageCropper(
@@ -194,6 +194,25 @@ struct Index {
         Column().layoutWeight(1)
       }
       Row() {
+
+        Column() {
+          SymbolGlyph($r('sys.symbol.undo')).symbolStyle().fontColor([this.canUndo ? 'rgb(103, 80, 164)' : Color.Gray])
+          Text('撤销').fontColor(this.canUndo ? Color.Black : Color.Gray).fontSize(12)
+        }.onClick(() => {
+          this._onUndoOrRedo(() => {
+            this.controller.undo();
+          })
+        }).margin(5).hitTestBehavior(this.canUndo ? HitTestMode.Default : HitTestMode.None)
+
+        Column() {
+          SymbolGlyph($r('sys.symbol.redo')).symbolStyle().fontColor([this.canRedo ? 'rgb(103, 80, 164)' : Color.Gray])
+          Text('重做').fontColor(this.canRedo ? Color.Black : Color.Gray).fontSize(12)
+        }.onClick(() => {
+          this._onUndoOrRedo(() => {
+            this.controller.redo();
+          })
+        }).margin(5).hitTestBehavior(this.canRedo ? HitTestMode.Default : HitTestMode.None)
+
         Select(this.cropLayerPainters)
           .selected(this.cropLayerPainterIndex)
           .value('裁剪框(' + this.cropLayerPainters[this.cropLayerPainterIndex].value + ')')
@@ -214,38 +233,25 @@ struct Index {
               this._config = this._config.copyWith({
                 cropLayerPainter: this.cropLayerPainters[this.cropLayerPainterIndex].painter,
                 cropAspectRatio: this._aspectRatio.value,
-                maxScale: 4,
+                // maxScale: index == 1 ? 4 : 8,
+                // cropRectPadding: image_cropper.geometry.EdgeInsets.all(index == 1 ? 60 : 20)
               })
             }
           })
           .margin(5)
 
-        Column() {
-          SymbolGlyph($r('sys.symbol.undo')).symbolStyle().fontColor([this.canUndo ? 'rgb(103, 80, 164)' : Color.Gray])
-          Text('撤销').fontColor(this.canUndo ? Color.Black : Color.Gray).fontSize(12)
-        }.onClick(() => {
-          this._onUndoOrRedo(() => {
-            this.controller.undo();
-          })
-        }).margin(5).hitTestBehavior(this.canUndo ? HitTestMode.Default : HitTestMode.None)
-
-        Column() {
-          SymbolGlyph($r('sys.symbol.redo')).symbolStyle().fontColor([this.canRedo ? 'rgb(103, 80, 164)' : Color.Gray])
-          Text('重做').fontColor(this.canRedo ? Color.Black : Color.Gray).fontSize(12)
-        }.onClick(() => {
-          this._onUndoOrRedo(() => {
-            this.controller.redo();
-          })
-        }).margin(5).hitTestBehavior(this.canRedo ? HitTestMode.Default : HitTestMode.None)
-
         Row().layoutWeight(1)
         Column() {
-          SymbolGlyph($r('sys.symbol.car')).symbolStyle()
+          SymbolGlyph($r('sys.symbol.clean')).symbolStyle()
           Text('重置').fontSize(12)
         }.onClick(() => {
           this.currentDegree = 0;
           this._aspectRatio = this._aspectRatios[0];
           this.cropLayerPainterIndex = 0;
+          this._config = this._config.copyWith({
+            cropLayerPainter: this.cropLayerPainters[this.cropLayerPainterIndex].painter,
+            cropAspectRatio: this._aspectRatio.value,
+          })
           this.controller.reset();
         }).margin(5)
       }.margin(5)

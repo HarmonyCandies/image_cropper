@@ -311,21 +311,21 @@ export class FittedSizes {
 }
 
 export function defaultEditorMaskColorHandler(pointerDown: boolean): string | number | CanvasGradient | CanvasPattern {
-  return rgbToHex(254, 247, 255, pointerDown ? 0.4 : 0.8)
+  return rgbToHex(255, 255, 255, pointerDown ? 0.4 : 0.8)
 }
 
 export function rgbToHex(r: number, g: number, b: number, opacity: number = 1): string {
   const toHex = (num: number) => num.toString(16).padStart(2, '0').toUpperCase();
-  return `#${toHex(parseInt((255 * opacity).toString(),10))}${toHex(r)}${toHex(g)}${toHex(b)}`;
+  return `#${toHex(parseInt((255 * opacity).toString(), 10))}${toHex(r)}${toHex(g)}${toHex(b)}`;
 }
 
 export function debounce(
   fn: () => void,
   duration: number
-): ()=>void {
+): () => void {
   let timeout: number | null = null;
 
-  return ()=>{
+  return () => {
     if (timeout) {
       clearTimeout(timeout);
     }

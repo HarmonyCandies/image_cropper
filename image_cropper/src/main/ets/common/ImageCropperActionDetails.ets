@@ -263,7 +263,7 @@ export class ImageCropperActionDetails {
 
   scaleToFitCropRect(): number {
     let result = this.getTransform();
-
+    result.invert();
     const rect = this._destinationRect!;
 
     const rectVertices: geometry.Offset[] = [
@@ -283,7 +283,7 @@ export class ImageCropperActionDetails {
 
   scaleToFitImageRect(): number {
     let result = this.getTransform();
-
+    result.invert();
     const rect = this._destinationRect!;
 
     const rectVertices: geometry.Offset[] = [
@@ -382,7 +382,7 @@ export class ImageCropperActionDetails {
     let rect = this.destinationRect!.shift(offset);
 
     const result = this.getTransform();
-
+    result.invert();
     const rectVertices = [
       this.cropRect!.topLeft,
       this.cropRect!.topRight,
@@ -424,6 +424,7 @@ export class ImageCropperActionDetails {
     }
 
     const result = this.getTransform();
+    result.invert();
     const rectVertices = [
       this.cropRect!.topLeft,
       this.cropRect!.topRight,
@@ -484,6 +485,7 @@ export class ImageCropperActionDetails {
   updateCropRect(cropRect: geometry.Rect,
   ): geometry.Rect {
     let result = this.getTransform();
+    result.invert();
     let screenDestinationRect = this._destinationRect!;
     const rect = screenDestinationRect;
 
@@ -514,7 +516,6 @@ export class ImageCropperActionDetails {
       if (lineRectIntersections.length > 0) {
         hasOffsetOutside = true;
         list[i] = lineRectIntersections[0];
-        break;
       }
     }
 
