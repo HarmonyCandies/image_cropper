@@ -12,7 +12,8 @@ import { CropAspectRatios } from '@candies/image_cropper';
 
 @Extend(SymbolGlyph)
 function symbolStyle() {
-  .fontColor(['rgb(103, 80, 164)']).fontSize(30)
+  .fontColor([
+    $r('sys.color.brand')]).fontSize(30)
 }
 
 interface AspectRatioItem {
@@ -84,6 +85,7 @@ struct Index {
     const context: Context = getContext(this);
     const resourceMgr: resourceManager.ResourceManager = context.resourceManager;
     let rfd = await resourceMgr.getRawFd('hdc.jpg');
+
     this.image = image.createImageSource(rfd);
   }
 
@@ -196,7 +198,7 @@ struct Index {
       Row() {
 
         Column() {
-          SymbolGlyph($r('sys.symbol.undo')).symbolStyle().fontColor([this.canUndo ? 'rgb(103, 80, 164)' : Color.Gray])
+          SymbolGlyph($r('sys.symbol.undo')).symbolStyle().fontColor([this.canUndo ? $r('sys.color.brand') : Color.Gray])
           Text('撤销').fontColor(this.canUndo ? Color.Black : Color.Gray).fontSize(12)
         }.onClick(() => {
           this._onUndoOrRedo(() => {
@@ -205,7 +207,7 @@ struct Index {
         }).margin(5).hitTestBehavior(this.canUndo ? HitTestMode.Default : HitTestMode.None)
 
         Column() {
-          SymbolGlyph($r('sys.symbol.redo')).symbolStyle().fontColor([this.canRedo ? 'rgb(103, 80, 164)' : Color.Gray])
+          SymbolGlyph($r('sys.symbol.redo')).symbolStyle().fontColor([this.canRedo ? $r('sys.color.brand') : Color.Gray])
           Text('重做').fontColor(this.canRedo ? Color.Black : Color.Gray).fontSize(12)
         }.onClick(() => {
           this._onUndoOrRedo(() => {
@@ -217,7 +219,7 @@ struct Index {
           .selected(this.cropLayerPainterIndex)
           .value('裁剪框(' + this.cropLayerPainters[this.cropLayerPainterIndex].value + ')')
           .font({ size: 12, weight: 400 })
-          .fontColor('rgb(103, 80, 164)')
+          .fontColor($r('sys.color.brand'))
           .selectedOptionFont({ size: 12, weight: 400 })
           .optionFont({ size: 12, weight: 400 })// s.space(this.space)
             //.arrowPosition(this.arrowPosition)
@@ -318,7 +320,7 @@ struct Index {
               .textAlign(TextAlign.Center)
               .borderRadius(10)
               .fontColor(Color.White)
-              .backgroundColor(this._aspectRatio.value == item.value ? 'rgb(103, 80, 164)' : Color.Gray)
+              .backgroundColor(this._aspectRatio.value == item.value ? $r('sys.color.brand') : Color.Gray)
           }.onClick(() => {
             if (this.cropLayerPainterIndex == 2 && item.value != CropAspectRatios.ratio1_1) {
               promptAction.showToast({ message: '圆形裁剪，只能设置 1*1 的长宽比例！', alignment: Alignment.Center, });

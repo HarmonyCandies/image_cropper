@@ -2,7 +2,6 @@ import { ActionDetailsIsChanged, EditorMaskColorHandler } from "../Declare";
 import { geometry } from '../model/Geometry';
 import { ImageCropperController } from "./ImageCropperController";
 import { ImageCropperLayerPainter } from "./ImageCropperLayerPainter";
-import { defaultEditorMaskColorHandler, rgbToHex } from "../Utils";
 
 export class CropAspectRatios {
   /// No aspect ratio for crop; free-form cropping is allowed.
@@ -101,10 +100,10 @@ export class ImageCropperConfig {
   maxScale: number;
   cropRectPadding: geometry.EdgeInsets;
   cornerSize: geometry.Size;
-  cornerColor: string | number | CanvasGradient | CanvasPattern;
-  lineColor: string | number | CanvasGradient | CanvasPattern;
+  cornerColor?: string | number | CanvasGradient | CanvasPattern;
+  lineColor?: string | number | CanvasGradient | CanvasPattern;
   lineHeight: number;
-  editorMaskColorHandler: EditorMaskColorHandler;
+  editorMaskColorHandler?: EditorMaskColorHandler;
   hitTestSize: number;
   cropRectAutoCenterAnimationDuration: number;
   cropAspectRatio: number | null;
@@ -121,12 +120,12 @@ export class ImageCropperConfig {
     this.cornerSize = options.cornerSize ?? new geometry.Size(30, 5);
 
 
-    this.cornerColor = options.cornerColor ?? rgbToHex(103, 80, 164);
+    this.cornerColor = options.cornerColor;
 
-    this.lineColor = options.lineColor ?? rgbToHex(254, 247, 255, 0.7);
+    this.lineColor = options.lineColor;
 
     this.lineHeight = options.lineHeight ?? 0.6;
-    this.editorMaskColorHandler = options.editorMaskColorHandler ?? defaultEditorMaskColorHandler;
+    this.editorMaskColorHandler = options.editorMaskColorHandler;
     this.hitTestSize = options.hitTestSize ?? 20.0;
     this.cropRectAutoCenterAnimationDuration = options.cropRectAutoCenterAnimationDuration ?? 200;
     this.cropAspectRatio = options.cropAspectRatio ?? CropAspectRatios.custom;

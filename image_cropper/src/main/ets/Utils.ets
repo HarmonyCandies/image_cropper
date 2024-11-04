@@ -310,14 +310,40 @@ export class FittedSizes {
   }
 }
 
-export function defaultEditorMaskColorHandler(pointerDown: boolean): string | number | CanvasGradient | CanvasPattern {
-  return rgbToHex(255, 255, 255, pointerDown ? 0.4 : 0.8)
-}
-
 export function rgbToHex(r: number, g: number, b: number, opacity: number = 1): string {
   const toHex = (num: number) => num.toString(16).padStart(2, '0').toUpperCase();
   return `#${toHex(parseInt((255 * opacity).toString(), 10))}${toHex(r)}${toHex(g)}${toHex(b)}`;
 }
+
+export function decimalToHexColor(decimalColor: number, opacity: number = 1): string {
+  // 提取红色分量
+  const r = (decimalColor >> 16) & 0xFF;
+  // 提取绿色分量
+  const g = (decimalColor >> 8) & 0xFF;
+  // 提取蓝色分量
+  const b = decimalColor & 0xFF;
+  const toHex = (num: number) => num.toString(16).padStart(2, '0').toUpperCase();
+  // 合并并返回 16 进制字符串
+  return `#${toHex(parseInt((255 * opacity).toString(), 10))}${toHex(r)}${toHex(g)}${toHex(b)}`.toUpperCase();
+}
+
+export function hexColorWithOpacity(hexColor: string, opacity: number = 1): string {
+  // 去掉 # 并转为大写，统一处理
+  hexColor = hexColor.replace('#', '').toUpperCase();
+
+  // 如果 hexColor 长度为 8，则它已经有 Alpha 通道 (AARRGGBB)
+  if (hexColor.length === 8) {
+    // 移除已有的 Alpha 通道，只保留 RRGGBB 部分
+    hexColor = hexColor.slice(2);
+  }
+
+  // 将 alpha (0 到 1) 转换为 16 进制的 Alpha 通道（两位数）
+  const alphaHex = Math.round(opacity * 255).toString(16).padStart(2, '0').toUpperCase();
+
+  // 合并新的 Alpha 通道和颜色代码
+  return `#${alphaHex}${hexColor}`;
+}
+
 
 export function debounce(
   fn: () => void,

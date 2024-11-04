@@ -2,7 +2,16 @@ import { image } from '@kit.ImageKit';
 import { ImageCropperActionDetails } from '../common/ImageCropperActionDetails';
 import { CropAspectRatios, ImageCropperConfig, InitCropRectType } from '../common/ImageCropperConfig';
 import { geometry } from '../model/Geometry';
-import { debounce, EdgeInsetsUtils, getDestinationRect, NumberUtils, OffsetUtils, RectUtils } from '../Utils';
+import {
+  debounce,
+  decimalToHexColor,
+  EdgeInsetsUtils,
+  getDestinationRect,
+  hexColorWithOpacity,
+  NumberUtils,
+  OffsetUtils,
+  RectUtils
+} from '../Utils';
 import { matrix4 } from '@kit.ArkUI';
 import animator, { AnimatorOptions, AnimatorResult } from '@ohos.animator';
 import { Matrix4, Vector4 } from '../model/Matrix4';
@@ -51,11 +60,20 @@ export struct ImageCropper {
   private _debounceSaveCurrentEditActionDetails: () => void = debounce(() => {
     this._saveCurrentState();
   }, 400);
-  private _theme: Theme | null = null;
+  private _brandColor: string | null = null;
+  private _backgroundColor: string | null = null;
 
   onWillApplyTheme(theme: Theme) {
-    this._theme = theme;
-    this._drawLayer();
+    this.initSystemColor().then(() => {
+      this._drawLayer();
+    });
+  }
+
+  async initSystemColor(): Promise<void> {
+    let context = getContext(this);
+    this._brandColor = decimalToHexColor(await context.resourceManager.getColor($r('sys.color.brand')));
+    this._backgroundColor =
+      decimalToHexColor(await context.resourceManager.getColor($r('sys.color.background_primary')));
   }
 
   onImageChanged(changedPropertyName: string) {
@@ -672,6 +690,28 @@ export struct ImageCropper {
     if (!this._cropLayerContextReady) {
       return;
     }
+
+    let lineColor = this._config!.lineColor;
+    let cornerColor = this._config!.cornerColor;
+    let editorMaskColorHandler = this._config!.editorMaskColorHandler;
+    let maskColor: string | number | CanvasGradient | CanvasPattern | null = null;
+    if (editorMaskColorHandler != null) {
+      maskColor = editorMaskColorHandler(this._pointerDown);
+    }
+    let backgroundColor = this._backgroundColor;
+    let brandColor = this._brandColor;
+    if (brandColor != null) {
+      cornerColor = cornerColor ?? brandColor;
+    }
+    if (backgroundColor != null) {
+      maskColor = maskColor ?? hexColorWithOpacity(backgroundColor, this._pointerDown ? 0.4 : 0.8);
+      lineColor = lineColor ?? hexColorWithOpacity(backgroundColor, 0.7);
+    }
+
+    if (lineColor == null || cornerColor == null || maskColor == null) {
+      return;
+    }
+
     let layoutRect: geometry.Rect = this._actionDetails!.layoutRect!;
     this.cropLayerContext.reset();
     let rotateRadians = this._cropRectRotateRadians;
@@ -691,14 +731,15 @@ export struct ImageCropper {
       layoutRect = geometry.Rect.fromCenter(layoutRect.center, diagonal, diagonal);
     }
 
+
     // Paint the crop layer
     this._config!.cropLayerPainter.paint({
       canvas: this.cropLayerContext,
       cropRect: this._actionDetails!.cropRect!,
       layoutRect: layoutRect,
-      lineColor: this._config!.lineColor,
-      cornerColor: this._config!.cornerColor,
-      maskColor: this._config!.editorMaskColorHandler(this._pointerDown),
+      lineColor: lineColor,
+      cornerColor: cornerColor,
+      maskColor: maskColor,
       cornerSize: this._config!.cornerSize,
       lineHeight: this._config!.lineHeight,
       pointerDown: this._pointerDown,

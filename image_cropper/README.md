@@ -128,10 +128,10 @@ export interface ImageCropperConfigOptions {
 | maxScale                            | 最大的缩放倍数                                                                     | 5.0                                                                   |
 | cropRectPadding                     | 裁剪框跟图片 layout 区域之间的距离。最好是保持一定距离，不然裁剪框边界很难进行拖拽 | EdgeInsets.all(20.0)                                                  |
 | cornerSize                          | 裁剪框四角图形的大小                                                               | Size(30.0, 5.0)                                                       |
-| cornerColor                         | 裁剪框四角图形的颜色                                                               | 'rgb(103, 80, 164)'                                                   |
-| lineColor                           | 裁剪框线的颜色                                                                     | 'rgba(254, 247, 255, 0.7)'                                            |
+| cornerColor                         | 裁剪框四角图形的颜色                                                               | 'sys.color.brand'                                                   |
+| lineColor                           | 裁剪框线的颜色                                                                     | 'sys.color.background_primary' 透明度 0.7                                          |
 | lineHeight                          | 裁剪框线的高度                                                                     | 0.6                                                                   |
-| editorMaskColorHandler              | 蒙层的颜色回调，你可以根据是否手指按下来设置不同的蒙层颜色                         | pointerDown ? 'rgba(255, 255, 255, 0.4)' : 'rgba(255, 255, 255, 0.8)' |
+| editorMaskColorHandler              | 蒙层的颜色回调，你可以根据是否手指按下来设置不同的蒙层颜色                         |  'sys.color.background_primary' 如果按下透明度 0.4 否则透明度 0.8|
 | hitTestSize                         | 裁剪框四角以及边线能够拖拽的区域的大小                                             | 20.0                                                                  |
 | cropRectAutoCenterAnimationDuration | 当裁剪框拖拽变化结束之后，自动适应到中间的动画的时长                               | 200 milliseconds                                                      |
 | cropAspectRatio                     | 裁剪框的宽高比                                                                     | null(无宽高比)                                                        |
