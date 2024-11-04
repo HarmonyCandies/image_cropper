@@ -1,12 +1,10 @@
 import { image } from '@kit.ImageKit';
 import { ImageCropperActionDetails } from '../common/ImageCropperActionDetails';
 import { CropAspectRatios, ImageCropperConfig, InitCropRectType } from '../common/ImageCropperConfig';
-import { InitCropperConfigHandler } from '../Declare';
 import { geometry } from '../model/Geometry';
 import { debounce, EdgeInsetsUtils, getDestinationRect, NumberUtils, OffsetUtils, RectUtils } from '../Utils';
 import { matrix4 } from '@kit.ArkUI';
 import animator, { AnimatorOptions, AnimatorResult } from '@ohos.animator';
-import { faceDetector } from '@kit.CoreVisionKit';
 import { Matrix4, Vector4 } from '../model/Matrix4';
 import { RectTween } from '../common/Curve';
 import { FlipOptions, RotateOptions } from '../common/ImageCropperController';
@@ -183,7 +181,7 @@ export struct ImageCropper {
   _startCropRectAutoCenterAnimation
   (begin: geometry.Rect, end: geometry.Rect): void {
     let options: AnimatorOptions = {
-      duration: this._config!.animationDuration,
+      duration: this._config!.cropRectAutoCenterAnimationDuration,
       easing: "linear",
       delay: 0,
       fill: "forwards",
@@ -1288,7 +1286,7 @@ export struct ImageCropper {
   }
 
   private _onEditActionDetailsIsChanged(): void {
-    let editActionDetailsIsChanged = this._config?.editActionDetailsIsChanged;
+    let editActionDetailsIsChanged = this._config?.actionDetailsIsChanged;
     if (editActionDetailsIsChanged != undefined) {
       editActionDetailsIsChanged(this._actionDetails);
     }

@@ -1,8 +1,4 @@
-import { common2D, drawing } from '@kit.ArkGraphics2D';
-
 import { geometry } from '../model/Geometry';
-import { matrix4 } from '@kit.ArkUI';
-import { NumberUtils } from '../Utils';
 
 export class ImageCropperLayerPainter {
   /// Paint the entire crop layer, including mask, lines, and corners

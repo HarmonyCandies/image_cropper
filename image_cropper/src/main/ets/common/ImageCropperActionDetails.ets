@@ -1,6 +1,5 @@
 import { geometry } from '../model/Geometry';
 import { EdgeInsetsUtils, NumberUtils, OffsetUtils, RectUtils } from '../Utils';
-import { matrix4 } from '@kit.ArkUI';
 import { drawing } from '@kit.ArkGraphics2D';
 import { Matrix4, Vector4 } from '../model/Matrix4';
 import { ImageCropperConfig } from './ImageCropperConfig';

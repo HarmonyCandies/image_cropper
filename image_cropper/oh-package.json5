@@ -4,7 +4,8 @@
   "keywords": [
     "crop",
     "cropimage",
-    "imagecropper"
+    "imagecropper",
+    "image"
   ],
   "author": "zmtzawqlp",
   "name": "@candies/image_cropper",

@@ -83,7 +83,7 @@ struct Index {
   async init(): Promise<void> {
     const context: Context = getContext(this);
     const resourceMgr: resourceManager.ResourceManager = context.resourceManager;
-    let rfd = await resourceMgr.getRawFd('gwen_jf.jpg');
+    let rfd = await resourceMgr.getRawFd('hdc.jpg');
     this.image = image.createImageSource(rfd);
   }
 
@@ -115,7 +115,7 @@ struct Index {
     Column() {
       Row() {
         Column() {
-          SymbolGlyph($r('sys.symbol.cake')).symbolStyle()
+          SymbolGlyph($r('sys.symbol.picture')).symbolStyle()
           Text('选择图片').fontSize(12)
         }.onClick(() => {
           this.photoPicker.select({

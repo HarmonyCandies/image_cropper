@@ -1,6 +1,5 @@
-import { EditActionDetailsIsChanged, EditorMaskColorHandler } from "../Declare";
+import { ActionDetailsIsChanged, EditorMaskColorHandler } from "../Declare";
 import { geometry } from '../model/Geometry';
-import { common2D } from '@kit.ArkGraphics2D';
 import { ImageCropperController } from "./ImageCropperController";
 import { ImageCropperLayerPainter } from "./ImageCropperLayerPainter";
 import { defaultEditorMaskColorHandler, rgbToHex } from "../Utils";
@@ -33,21 +32,68 @@ export enum InitCropRectType {
 
 
 export interface ImageCropperConfigOptions {
+  /// Maximum scale factor for zooming the image during editing.
+  /// Determines how far the user can zoom in on the image.
   maxScale?: number;
+
+  /// Padding between the crop rect and the layout or image boundaries.
+  /// Helps to provide spacing around the crop rect within the editor.
   cropRectPadding?: geometry.EdgeInsets;
+
+  /// Size of the corner handles for the crop rect.
+  /// These are the draggable shapes at the corners of the crop rectangle.
   cornerSize?: geometry.Size;
+
+  /// Color of the corner handles for the crop rect.
+  /// Defaults to the primary color if not provided.
   cornerColor?: string | number | CanvasGradient | CanvasPattern;
+
+  /// Color of the crop boundary lines.
+  /// Defaults to `scaffoldBackgroundColor.withOpacity(0.7)` if not specified.
   lineColor?: string | number | CanvasGradient | CanvasPattern;
+
+  /// Thickness of the crop boundary lines.
+  /// Controls how bold or thin the crop rect lines appear.
   lineHeight?: number;
+
+  /// Handler that defines the color of the mask applied to the image when the editor is active.
+  /// The mask darkens the area outside the crop rect, and its color may vary depending on
+  /// whether the user is interacting with the crop rect.
   editorMaskColorHandler?: EditorMaskColorHandler;
+
+  /// The size of the hit test region used to detect user interactions with the crop
+  /// rect corners and boundary lines.
   hitTestSize?: number;
-  animationDuration?: number;
+
+  /// Duration for the auto-center animation, which animates the crop rect back to the center
+  /// after the user has finished manipulating it.
+  cropRectAutoCenterAnimationDuration?: number;
+
+  /// Aspect ratio of the crop rect. This controls the ratio between the width and height of the cropping area.
+  /// By default, it's set to custom, allowing freeform cropping unless specified otherwise.
   cropAspectRatio?: number | null;
+
+  /// Initial aspect ratio of the crop rect. This only affects the initial state of the crop rect,
+  /// giving users the option to start with a pre-defined aspect ratio.
   initialCropAspectRatio?: number | null;
+
+  /// Specifies how the initial crop rect is defined. It can either be based on the entire image rect
+  /// or the layout rect (the visible part of the image).
   initCropRectType?: InitCropRectType;
+
+  /// A custom painter for drawing the crop rect and handles.
+  /// This allows for customizing the appearance of the crop boundary and corner handles.
   cropLayerPainter?: ImageCropperLayerPainter;
+
+  /// Speed factor for zooming and panning interactions.
+  /// Adjusts how quickly the user can move or zoom the image during editing.
   speed?: number;
-  editActionDetailsIsChanged?: EditActionDetailsIsChanged;
+
+  /// Callback triggered when `ImageCropperActionDetails` is changed.
+  actionDetailsIsChanged?: ActionDetailsIsChanged;
+
+  /// A controller to manage image editing actions, providing functions like rotating, flipping, undoing, and redoing actions..
+  /// This allows for external control of the editing process.
   controller?: ImageCropperController;
 }
 
@@ -60,18 +106,18 @@ export class ImageCropperConfig {
   lineHeight: number;
   editorMaskColorHandler: EditorMaskColorHandler;
   hitTestSize: number;
-  animationDuration: number;
+  cropRectAutoCenterAnimationDuration: number;
   cropAspectRatio: number | null;
   initialCropAspectRatio: number | null;
   initCropRectType: InitCropRectType;
   cropLayerPainter: ImageCropperLayerPainter;
   speed: number;
-  editActionDetailsIsChanged?: EditActionDetailsIsChanged;
+  actionDetailsIsChanged?: ActionDetailsIsChanged;
   controller?: ImageCropperController;
 
   constructor(options: ImageCropperConfigOptions = {}) {
     this.maxScale = options.maxScale ?? 5.0;
-    this.cropRectPadding = options.cropRectPadding ?? new geometry.EdgeInsets(20, 20, 20, 20);
+    this.cropRectPadding = options.cropRectPadding ?? geometry.EdgeInsets.all(20);
     this.cornerSize = options.cornerSize ?? new geometry.Size(30, 5);
 
 
@@ -82,13 +128,13 @@ export class ImageCropperConfig {
     this.lineHeight = options.lineHeight ?? 0.6;
     this.editorMaskColorHandler = options.editorMaskColorHandler ?? defaultEditorMaskColorHandler;
     this.hitTestSize = options.hitTestSize ?? 20.0;
-    this.animationDuration = options.animationDuration ?? 200;
+    this.cropRectAutoCenterAnimationDuration = options.cropRectAutoCenterAnimationDuration ?? 200;
     this.cropAspectRatio = options.cropAspectRatio ?? CropAspectRatios.custom;
     this.initialCropAspectRatio = options.initialCropAspectRatio ?? CropAspectRatios.custom;
     this.initCropRectType = options.initCropRectType ?? InitCropRectType.imageRect;
     this.cropLayerPainter = options.cropLayerPainter ?? new ImageCropperLayerPainter();
     this.speed = options.speed ?? 1.0;
-    this.editActionDetailsIsChanged = options.editActionDetailsIsChanged;
+    this.actionDetailsIsChanged = options.actionDetailsIsChanged;
     this.controller = options.controller;
 
     if (this.lineHeight <= 0.0) {
@@ -115,13 +161,14 @@ export class ImageCropperConfig {
       lineHeight: option?.lineHeight ?? this.lineHeight,
       editorMaskColorHandler: option?.editorMaskColorHandler ?? this.editorMaskColorHandler,
       hitTestSize: option?.hitTestSize ?? this.hitTestSize,
-      animationDuration: option?.animationDuration ?? this.animationDuration,
+      cropRectAutoCenterAnimationDuration: option?.cropRectAutoCenterAnimationDuration ??
+      this.cropRectAutoCenterAnimationDuration,
       cropAspectRatio: option?.cropAspectRatio ?? this.cropAspectRatio,
       initialCropAspectRatio: option?.initialCropAspectRatio ?? this.initialCropAspectRatio,
       initCropRectType: option?.initCropRectType ?? this.initCropRectType,
       cropLayerPainter: option?.cropLayerPainter ?? this.cropLayerPainter,
       speed: option?.speed ?? this.speed,
-      editActionDetailsIsChanged: option?.editActionDetailsIsChanged ?? this.editActionDetailsIsChanged,
+      actionDetailsIsChanged: option?.actionDetailsIsChanged ?? this.actionDetailsIsChanged,
       controller: option?.controller ?? this.controller,
     });
   }
