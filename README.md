@@ -125,24 +125,24 @@ export interface ImageCropperConfigOptions {
 }
 ```
 
-| 参数                                | 描述                                                                               | 默认                                                                  |
-| ----------------------------------- | ---------------------------------------------------------------------------------- | --------------------------------------------------------------------- |
-| maxScale                            | 最大的缩放倍数                                                                     | 5.0                                                                   |
-| cropRectPadding                     | 裁剪框跟图片 layout 区域之间的距离。最好是保持一定距离，不然裁剪框边界很难进行拖拽 | EdgeInsets.all(20.0)                                                  |
-| cornerSize                          | 裁剪框四角图形的大小                                                               | Size(30.0, 5.0)                                                       |
-| cornerColor                         | 裁剪框四角图形的颜色                                                               | 'sys.color.brand'                                                   |
-| lineColor                           | 裁剪框线的颜色                                                                     | 'sys.color.background_primary' 透明度 0.7                                          |
-| lineHeight                          | 裁剪框线的高度                                                                     | 0.6                                                                   |
-| editorMaskColorHandler              | 蒙层的颜色回调，你可以根据是否手指按下来设置不同的蒙层颜色                         |  'sys.color.background_primary' 如果按下透明度 0.4 否则透明度 0.8|
-| hitTestSize                         | 裁剪框四角以及边线能够拖拽的区域的大小                                             | 20.0                                                                  |
-| cropRectAutoCenterAnimationDuration | 当裁剪框拖拽变化结束之后，自动适应到中间的动画的时长                               | 200 milliseconds                                                      |
-| cropAspectRatio                     | 裁剪框的宽高比                                                                     | null(无宽高比)                                                        |
-| initialCropAspectRatio              | 初始化的裁剪框的宽高比                                                             | null(custom: 填充满图片原始宽高比)                                    |
-| initCropRectType                    | 剪切框的初始化类型(根据图片初始化区域或者图片的 layout 区域)                       | imageRect                                                             |
-| controller                          | 提供旋转,翻转,撤销,重做,重置,重新设置裁剪比例,获取裁剪之后图片数据等操作           | null                                                                  |
-| actionDetailsIsChanged              | 裁剪操作变化的时候回调                                                             | null                                                                  |
-| speed                               | 缩放平移图片的速度                                                                 | 1                                                                     |
-| cropLayerPainter                    | 用于绘制裁剪框图层                                                                 | `ImageCropperLayerPainter`                                            |
+| 参数                                | 描述                                                                               | 默认                                                             |
+| ----------------------------------- | ---------------------------------------------------------------------------------- | ---------------------------------------------------------------- |
+| maxScale                            | 最大的缩放倍数                                                                     | 5.0                                                              |
+| cropRectPadding                     | 裁剪框跟图片 layout 区域之间的距离。最好是保持一定距离，不然裁剪框边界很难进行拖拽 | EdgeInsets.all(20.0)                                             |
+| cornerSize                          | 裁剪框四角图形的大小                                                               | Size(30.0, 5.0)                                                  |
+| cornerColor                         | 裁剪框四角图形的颜色                                                               | 'sys.color.brand'                                                |
+| lineColor                           | 裁剪框线的颜色                                                                     | 'sys.color.background_primary' 透明度 0.7                        |
+| lineHeight                          | 裁剪框线的高度                                                                     | 0.6                                                              |
+| editorMaskColorHandler              | 蒙层的颜色回调，你可以根据是否手指按下来设置不同的蒙层颜色                         | 'sys.color.background_primary' 如果按下透明度 0.4 否则透明度 0.8 |
+| hitTestSize                         | 裁剪框四角以及边线能够拖拽的区域的大小                                             | 20.0                                                             |
+| cropRectAutoCenterAnimationDuration | 当裁剪框拖拽变化结束之后，自动适应到中间的动画的时长                               | 200 milliseconds                                                 |
+| cropAspectRatio                     | 裁剪框的宽高比                                                                     | null(无宽高比)                                                   |
+| initialCropAspectRatio              | 初始化的裁剪框的宽高比                                                             | null(custom: 填充满图片原始宽高比)                               |
+| initCropRectType                    | 剪切框的初始化类型(根据图片初始化区域或者图片的 layout 区域)                       | imageRect                                                        |
+| controller                          | 提供旋转,翻转,撤销,重做,重置,重新设置裁剪比例,获取裁剪之后图片数据等操作           | null                                                             |
+| actionDetailsIsChanged              | 裁剪操作变化的时候回调                                                             | null                                                             |
+| speed                               | 缩放平移图片的速度                                                                 | 1                                                                |
+| cropLayerPainter                    | 用于绘制裁剪框图层                                                                 | `ImageCropperLayerPainter`                                       |
 
 
 ### 裁剪框的宽高比
@@ -250,7 +250,7 @@ export class ImageCropperLayerPainter {
 | animation      | 是否开启动画   | false            |
 | duration       | 动画时长       | 200 milliseconds |
 | degree         | 旋转角度       | 90               |
-| rotateCropRect | 是否旋转裁剪框 | false            |
+| rotateCropRect | 是否旋转裁剪框 | true             |
 
 当 `rotateCropRect` 为 `true` 并且 `degree` 为 `90` 度时，裁剪框也会跟着旋转。
 
