@@ -357,7 +357,7 @@ export class ImageCropperActionDetails {
       }
     }
 
-    if (contains === 4) {
+    if (contains === 4 || scaleDelta == Infinity) {
       return -1;
     }
 
