@@ -2,6 +2,8 @@
 
 一个图片裁剪工具，支持裁剪、旋转、缩放、拖动、镜像等操作。
 
+原理讲解: https://juejin.cn/post/7433055767144136719
+
 ![editor.gif](https://github.com/HarmonyCandies/HarmonyCandies/blob/main/gif/image_cropper/editor.gif)
 
  
