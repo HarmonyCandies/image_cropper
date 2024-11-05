@@ -5,8 +5,10 @@
 原理讲解: https://juejin.cn/post/7433055767144136719
 
 ![editor.gif](https://github.com/HarmonyCandies/HarmonyCandies/blob/main/gif/image_cropper/editor.gif)
+关注公众号，获取更多鸿蒙开发资讯.
 
- 
+![candies.png](https://github.com/zmtzawqlp/zmtzawqlp/blob/master/candies.png)
+
 ## 安装
 
 `ohpm install @candies/image_cropper`
