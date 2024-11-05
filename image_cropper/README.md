@@ -28,12 +28,14 @@
 
 ```typescript
 import * as image_cropper from "@candies/image_cropper";
+import { ImageCropper } from "@candies/image_cropper";
 import { image } from '@kit.ImageKit';
+
 @Entry
 @Component
 struct Index {
   @State image: image.ImageSource | undefined = undefined;
-  private controller: image_cropper.ImageCropperController = new image_cropper.ImageCropperController();  
+  private controller: image_cropper.ImageCropperController = new image_cropper.ImageCropperController();
   @State config: image_cropper.ImageCropperConfig = new image_cropper.ImageCropperConfig(
     {
       maxScale: 8,
@@ -44,16 +46,18 @@ struct Index {
     }
   );
 
-   build() {
+  build() {
     Column() {
-      image_cropper.ImageCropper(
-      {
-       image: this.image,
-       config: this.config,
+      if (this.image != undefined) {
+        ImageCropper(
+          {
+            image: this.image,
+            config: this.config,
+          }
+        )
       }
-     )
     }
-   }
+  }
 }
 ```
 

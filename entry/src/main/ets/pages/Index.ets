@@ -1,4 +1,5 @@
 import * as image_cropper from "@candies/image_cropper";
+import { ImageCropper } from "@candies/image_cropper";
 import resourceManager from '@ohos.resourceManager';
 import { image } from '@kit.ImageKit';
 import { matrix4, promptAction, SymbolGlyphModifier } from '@kit.ArkUI';
@@ -186,7 +187,7 @@ struct Index {
       }.justifyContent(FlexAlign.End).width('100%')
 
       if (this.image != undefined) {
-        image_cropper.ImageCropper(
+        ImageCropper(
           {
             image: this.image,
             config: this._config,
@@ -198,7 +199,9 @@ struct Index {
       Row() {
 
         Column() {
-          SymbolGlyph($r('sys.symbol.undo')).symbolStyle().fontColor([this.canUndo ? $r('sys.color.brand') : Color.Gray])
+          SymbolGlyph($r('sys.symbol.undo'))
+            .symbolStyle()
+            .fontColor([this.canUndo ? $r('sys.color.brand') : Color.Gray])
           Text('撤销').fontColor(this.canUndo ? Color.Black : Color.Gray).fontSize(12)
         }.onClick(() => {
           this._onUndoOrRedo(() => {
@@ -207,7 +210,9 @@ struct Index {
         }).margin(5).hitTestBehavior(this.canUndo ? HitTestMode.Default : HitTestMode.None)
 
         Column() {
-          SymbolGlyph($r('sys.symbol.redo')).symbolStyle().fontColor([this.canRedo ? $r('sys.color.brand') : Color.Gray])
+          SymbolGlyph($r('sys.symbol.redo'))
+            .symbolStyle()
+            .fontColor([this.canRedo ? $r('sys.color.brand') : Color.Gray])
           Text('重做').fontColor(this.canRedo ? Color.Black : Color.Gray).fontSize(12)
         }.onClick(() => {
           this._onUndoOrRedo(() => {
