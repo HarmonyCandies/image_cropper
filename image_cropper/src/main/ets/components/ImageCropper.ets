@@ -64,23 +64,24 @@ export struct ImageCropper {
   private _backgroundColor: string | null = null;
 
   onWillApplyTheme(theme: Theme) {
-    this.initSystemColor().then(() => {
+    this.initSystemColor(theme).then(() => {
       this._drawLayer();
     });
   }
 
-  async initSystemColor(): Promise<void> {
+  async initSystemColor(theme: Theme): Promise<void> {
     let context = getContext(this);
     try {
-      this._brandColor = decimalToHexColor(await context.resourceManager.getColor($r('sys.color.brand')));
+      let brandColor = theme.colors.brand as Resource;
+      let backgroundColor = theme.colors.backgroundPrimary as Resource;
+      this._brandColor = decimalToHexColor(await context.resourceManager.getColor(brandColor.id));
       this._backgroundColor =
-        decimalToHexColor(await context.resourceManager.getColor($r('sys.color.background_primary')));
+        decimalToHexColor(await context.resourceManager.getColor(backgroundColor.id));
     } catch (e) {
-      // console.log('initSystemColor 出错:', JSON.stringify(e))
+      console.log('initSystemColor has error:', JSON.stringify(e))
       this._brandColor ??= '#FF0A59F7';
       this._backgroundColor ??= '#FFFFFFFF';
     }
-
   }
 
   onImageChanged(changedPropertyName: string) {
@@ -303,7 +304,6 @@ export struct ImageCropper {
           Canvas(this.imageContext).onReady(() => {
             this._imageContextReady = true;
             let outputSize: geometry.Size = new geometry.Size(this.imageContext.width, this.imageContext.height);
-            this.initSystemColor();
             if (this.imageInfo != null) {
               this.initImageRect(outputSize,
                 new geometry.Size(this.imageInfo!.size.width, this.imageInfo!.size.height));

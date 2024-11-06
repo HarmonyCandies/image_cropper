@@ -1,3 +1,7 @@
+## 1.0.4
+
+* Fix get _brandColor and _backgroundColor error
+
 ## 1.0.3
 
 * Add default _brandColor and _backgroundColor in case resourceManager get theme failed.
