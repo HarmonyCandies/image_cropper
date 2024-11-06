@@ -71,9 +71,16 @@ export struct ImageCropper {
 
   async initSystemColor(): Promise<void> {
     let context = getContext(this);
-    this._brandColor = decimalToHexColor(await context.resourceManager.getColor($r('sys.color.brand')));
-    this._backgroundColor =
-      decimalToHexColor(await context.resourceManager.getColor($r('sys.color.background_primary')));
+    try {
+      this._brandColor = decimalToHexColor(await context.resourceManager.getColor($r('sys.color.brand')));
+      this._backgroundColor =
+        decimalToHexColor(await context.resourceManager.getColor($r('sys.color.background_primary')));
+    } catch (e) {
+      // console.log('initSystemColor 出错:', JSON.stringify(e))
+      this._brandColor ??= '#FF0A59F7';
+      this._backgroundColor ??= '#FFFFFFFF';
+    }
+
   }
 
   onImageChanged(changedPropertyName: string) {
@@ -296,6 +303,7 @@ export struct ImageCropper {
           Canvas(this.imageContext).onReady(() => {
             this._imageContextReady = true;
             let outputSize: geometry.Size = new geometry.Size(this.imageContext.width, this.imageContext.height);
+            this.initSystemColor();
             if (this.imageInfo != null) {
               this.initImageRect(outputSize,
                 new geometry.Size(this.imageInfo!.size.width, this.imageInfo!.size.height));

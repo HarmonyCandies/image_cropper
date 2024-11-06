@@ -2,14 +2,13 @@ import * as image_cropper from "@candies/image_cropper";
 import { ImageCropper } from "@candies/image_cropper";
 import resourceManager from '@ohos.resourceManager';
 import { image } from '@kit.ImageKit';
-import { matrix4, promptAction, SymbolGlyphModifier } from '@kit.ArkUI';
+import { matrix4, promptAction } from '@kit.ArkUI';
 import { vibrator } from '@kit.SensorServiceKit';
-import { NumberUtils } from '@candies/image_cropper/src/main/ets/Utils';
 import { photoAccessHelper } from '@kit.MediaLibraryKit'
 import { fileIo } from '@kit.CoreFileKit';
 import { BusinessError } from '@ohos.base';
 import { CircleCornerImageCropperLayerPainter, CircleImageCropperLayerPainter } from '../painter';
-import { CropAspectRatios } from '@candies/image_cropper';
+
 
 @Extend(SymbolGlyph)
 function symbolStyle() {
@@ -327,7 +326,7 @@ struct Index {
               .fontColor(Color.White)
               .backgroundColor(this._aspectRatio.value == item.value ? $r('sys.color.brand') : Color.Gray)
           }.onClick(() => {
-            if (this.cropLayerPainterIndex == 2 && item.value != CropAspectRatios.ratio1_1) {
+            if (this.cropLayerPainterIndex == 2 && item.value != image_cropper.CropAspectRatios.ratio1_1) {
               promptAction.showToast({ message: '圆形裁剪，只能设置 1*1 的长宽比例！', alignment: Alignment.Center, });
               return;
             }
@@ -353,7 +352,7 @@ struct Index {
     let newCropAspectRatio =
       this.controller.originalCropAspectRatio;
     if (oldRotateDegrees != newRotateDegrees &&
-      !NumberUtils.equalTo(newRotateDegrees, oldRotateDegrees) &&
+      !image_cropper.NumberUtils.equalTo(newRotateDegrees, oldRotateDegrees) &&
       (newRotateDegrees - oldRotateDegrees) % 90 != 0) {
       this.currentDegree =
         this.currentDegree + (newRotateDegrees - oldRotateDegrees);
