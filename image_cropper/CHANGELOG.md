@@ -1,3 +1,7 @@
+## 1.0.5
+
+* Fix the issue with 90-degree judgment when rotate image.
+
 ## 1.0.4
 
 * Fix get _brandColor and _backgroundColor error

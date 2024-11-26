@@ -626,7 +626,7 @@ export struct ImageCropper {
     let end: number =
       begin + this._actionDetails!.reverseRotateRadians(rotateRadians);
 
-    let willRotateCropRect = rotateCropRect && Math.abs((degree % 360)) == 90;
+    let willRotateCropRect = rotateCropRect && degree % 90 === 0 && Math.abs(Math.floor(degree / 90)) % 2 === 1;
 
     if (willRotateCropRect) {
       let cropAspectRatio = this._actionDetails?.cropAspectRatio;
