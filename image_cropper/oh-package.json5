@@ -14,7 +14,7 @@
   "description": "一个图片裁剪组件，支持裁剪、旋转、缩放、拖动、镜像、撤消、重做、获取裁剪数据等操作",
   "main": "Index.ets",
   "repository": "https://github.com/HarmonyCandies/image_cropper",
-  "version": "1.0.5",
+  "version": "1.0.6",
   "homepage": "https://github.com/HarmonyCandies/image_cropper",
   "dependencies": {
     "@candies/image_editor": "^1.0.0"

@@ -1,3 +1,7 @@
+## 1.0.6
+
+* Fix drag crop rect can't zoom in the image.
+
 ## 1.0.5
 
 * Fix the issue with 90-degree judgment when rotate image.

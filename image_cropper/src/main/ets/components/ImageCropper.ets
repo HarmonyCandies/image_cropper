@@ -874,13 +874,15 @@ export struct ImageCropper {
       default:
     }
 
+    // drag crop rect to zoom in image
 
     /// make sure crop rect doesn't out of image rect
-    result = geometry.Rect.fromPoints(
-      new geometry.Offset(Math.max(result!.left, layerDestinationRect!.left),
-        Math.max(result.top, layerDestinationRect.top)),
-      new geometry.Offset(Math.min(result.right, layerDestinationRect.right),
-        Math.min(result.bottom, layerDestinationRect.bottom)));
+    //
+    // result = geometry.Rect.fromPoints(
+    //   new geometry.Offset(Math.max(result!.left, layerDestinationRect!.left),
+    //     Math.max(result.top, layerDestinationRect.top)),
+    //   new geometry.Offset(Math.min(result.right, layerDestinationRect.right),
+    //     Math.min(result.bottom, layerDestinationRect.bottom)));
 
 
     result = this._handleAspectRatio(
@@ -891,12 +893,12 @@ export struct ImageCropper {
       delta,
     );
 
-    /// move and scale image rect when crop rect is bigger than layout rect
-    ///
-
+    // move and scale image rect when crop rect is bigger than layout rect
+    //
     result = this._actionDetails!.updateCropRect(result);
 
-    if (!RectUtils.containsRect(this._actionDetails!.cropRectLayoutRect!, result)) {
+    if (RectUtils.beyond(result, this._actionDetails!.cropRectLayoutRect!)) {
+      this._actionDetails!.cropRect = result;
       let newScreenCropRect = getDestinationRect(
         this._actionDetails!.cropRectLayoutRect!, result.size,);
       this._doCropAutoCenterAnimation(newScreenCropRect);
