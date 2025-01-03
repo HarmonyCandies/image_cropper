@@ -1171,7 +1171,15 @@ export struct ImageCropper {
     );
 
     if (scaleDelta <= 0) {
-      return;
+      // make crop rect as bigger as possible
+      let scaleDelta1 =
+        this._actionDetails!.scaleToMatchRect(rectVertices, this._actionDetails!.cropRectLayoutRect!);
+      if (scaleDelta1 != -Infinity &&
+        !NumberUtils.equalTo(scaleDelta1, 1.0)) {
+        scaleDelta = scaleDelta1;
+      } else {
+        return;
+      }
     }
 
     // not out of layout rect

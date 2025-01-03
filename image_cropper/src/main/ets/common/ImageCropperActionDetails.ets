@@ -257,7 +257,56 @@ export class ImageCropperActionDetails {
         this.preTotalScale = this.totalScale;
         this.totalScale = this.totalScale * scaleDelta;
       }
+    } else {
+      // scale the image to align with the crop rect
+      let result = this.getTransform();
+      result.invert();
+      const rect = this._destinationRect!;
+
+      const rectVertices: geometry.Offset[] = [
+        this.cropRect!.topLeft,
+        this.cropRect!.topRight,
+        this.cropRect!.bottomRight,
+        this.cropRect!.bottomLeft,
+      ].map((element: geometry.Offset) => {
+        const cornerVector = new Vector4(element.dx, element.dy, 0.0, 1.0);
+        const newCornerVector = result.transform(cornerVector);
+        return new geometry.Offset(newCornerVector.x, newCornerVector.y);
+      });
+
+      let scaleDelta = this.scaleToMatchRect(
+        rectVertices,
+        rect,
+      );
+      if (scaleDelta != -Infinity) {
+        this.screenFocalPoint = null;
+        this.preTotalScale = this.totalScale;
+        this.totalScale = this.totalScale * scaleDelta;
+      }
     }
+  }
+
+  scaleToMatchRect(
+    rectVertices: geometry.Offset[],
+    rect: geometry.Rect,
+  ): number {
+    let scaleDelta = -Infinity;
+    let center: geometry.Offset = rect.center;
+    for (const element of rectVertices) {
+      if (!RectUtils.containsOffset(rect, element)) {
+        continue;
+      }
+
+      const x = Math.abs(element.dx - center.dx);
+      const y = Math.abs(element.dy - center.dy);
+      const halfWidth = rect.width / 2;
+      const halfHeight = rect.height / 2;
+      if (x < halfWidth || y < halfHeight) {
+        scaleDelta = Math.max(scaleDelta, Math.max(x / halfWidth, y / halfHeight));
+      }
+    }
+
+    return scaleDelta;
   }
 
   scaleToFitCropRect(): number {
