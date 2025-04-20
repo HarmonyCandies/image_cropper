@@ -278,7 +278,10 @@ export class ImageCropperActionDetails {
         rectVertices,
         rect,
       );
-      if (scaleDelta != -Infinity) {
+
+      // apply it only scaleDelta is small.
+      if (scaleDelta != -Infinity &&
+        this.totalScale * (1 - scaleDelta) <= 0.05) {
         this.screenFocalPoint = null;
         this.preTotalScale = this.totalScale;
         this.totalScale = this.totalScale * scaleDelta;

@@ -1,6 +1,10 @@
+## 1.1.1
+
+* Fix issue that Scale the image to align with the crop rect only when scaleDelta is small.
+
 ## 1.1.0
 
-* * Scale the image to align with the crop rect and make crop rect as bigger as possible when rotate Image on Editor mode.(#5)
+* Scale the image to align with the crop rect and make crop rect as bigger as possible when rotate Image on Editor mode.(#5)
 
 ## 1.0.6
 

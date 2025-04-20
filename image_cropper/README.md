@@ -2,7 +2,11 @@
 
 一个图片裁剪组件，支持裁剪、旋转、缩放、拖动、镜像、撤消、重做、获取裁剪数据等操作。
 
-原理讲解: https://juejin.cn/post/7433055767144136719
+HarmonyCanides: ![HarmonyCanides QQ 群](https://img.shields.io/badge/dynamic/yaml?url=https%3A%2F%2Fraw.githubusercontent.com%2Fharmonycandies%2F.github%2Frefs%2Fheads%2Fmain%2Fdata.yml&query=%24.qq_group_number&label=QQ%E7%BE%A4&logo=qq&color=1DACE8)
+
+原理讲解: 
+1. https://juejin.cn/post/7433055767144136719
+2. https://juejin.cn/post/7435658656714276916
 
 ![editor.gif](https://github.com/HarmonyCandies/HarmonyCandies/blob/main/gif/image_cropper/editor.gif)
 关注公众号 `糖果代码铺`，获取更多鸿蒙资讯.
