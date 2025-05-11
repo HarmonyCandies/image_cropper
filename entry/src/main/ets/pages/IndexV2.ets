@@ -1,8 +1,8 @@
 import * as image_cropper from "@candies/image_cropper";
-import { ImageCropper } from "@candies/image_cropper";
+import { ImageCropper, ImageCropperV2 } from "@candies/image_cropper";
 import resourceManager from '@ohos.resourceManager';
 import { image } from '@kit.ImageKit';
-import { matrix4, promptAction, router } from '@kit.ArkUI';
+import { matrix4, promptAction } from '@kit.ArkUI';
 import { vibrator } from '@kit.SensorServiceKit';
 import { photoAccessHelper } from '@kit.MediaLibraryKit'
 import { fileIo } from '@kit.CoreFileKit';
@@ -22,14 +22,14 @@ interface AspectRatioItem {
 }
 
 @Entry
-@Component
-struct Index {
-  @State image: image.ImageSource | undefined = undefined;
+@ComponentV2
+struct IndexV2 {
+  @Local image: image.ImageSource | undefined = undefined;
   dialogController: CustomDialogController | null = null;
   private controller: image_cropper.ImageCropperController = new image_cropper.ImageCropperController();
-  @State currentDegree: number = 0
-  @State canRedo: boolean = false;
-  @State canUndo: boolean = false;
+  @Local currentDegree: number = 0
+  @Local canRedo: boolean = false;
+  @Local canUndo: boolean = false;
   private _aspectRatios: Array<AspectRatioItem> = [
     { text: '自由', value: image_cropper.CropAspectRatios.custom },
     { text: '原始', value: image_cropper.CropAspectRatios.original },
@@ -39,7 +39,7 @@ struct Index {
     { text: '16*9', value: image_cropper.CropAspectRatios.ratio16_9 },
     { text: '9*16', value: image_cropper.CropAspectRatios.ratio9_16 },
   ];
-  @State _aspectRatio: AspectRatioItem = this._aspectRatios[0];
+  @Local _aspectRatio: AspectRatioItem = this._aspectRatios[0];
   private photoPicker = new photoAccessHelper.PhotoViewPicker();
   cropLayerPainters: Array<CropPainter> = [
     {
@@ -55,8 +55,8 @@ struct Index {
       value: '圆形裁剪',
     }
   ];
-  @State private cropLayerPainterIndex: number = 0;
-  @State _config: image_cropper.ImageCropperConfig = new image_cropper.ImageCropperConfig(
+  @Local private cropLayerPainterIndex: number = 0;
+  @Local _config: image_cropper.ImageCropperConfig = new image_cropper.ImageCropperConfig(
     {
       maxScale: 8,
       cropRectPadding: image_cropper.geometry.EdgeInsets.all(20),
@@ -116,10 +116,6 @@ struct Index {
   build() {
     Column() {
       Row() {
-        Button("V2装饰器")
-          .onClick((e) => {
-            router.pushUrl({url:'pages/IndexV2'})
-          })
         Column() {
           SymbolGlyph($r('sys.symbol.picture')).symbolStyle()
           Text('选择图片').fontSize(12)
@@ -190,7 +186,7 @@ struct Index {
       }.justifyContent(FlexAlign.End).width('100%')
 
       if (this.image != undefined) {
-        ImageCropper(
+        ImageCropperV2(
           {
             image: this.image,
             config: this._config,

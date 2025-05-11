@@ -1,4 +1,4 @@
-export { ImageCropper } from './src/main/ets/components/ImageCropper'
+export { ImageCropper,ImageCropperV2 } from './src/main/ets/components/ImageCropper'
 
 export *  from './src/main/ets/model/Geometry'
 export *  from './src/main/ets/common/ImageCropperActionDetails'
